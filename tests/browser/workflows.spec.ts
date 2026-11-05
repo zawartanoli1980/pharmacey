@@ -62,7 +62,9 @@ test("receive stock, sell strip and units, return and repay customer credit", as
   await page.getByLabel("Supplier invoice reference").fill("INV-" + Date.now());
   await page.getByLabel("Paid to supplier (PKR)").fill("100");
   await page.getByRole("button", { name: "Post goods receipt" }).click();
-  await expect(page.getByRole("status")).toContainText("Batch received");
+  await expect(page.locator(".toast[role=status]")).toContainText(
+    "Batch received",
+  );
   await page
     .getByRole("button", { name: "Point of sale", exact: false })
     .first()
@@ -94,7 +96,9 @@ test("receive stock, sell strip and units, return and repay customer credit", as
   await page
     .getByRole("button", { name: "Record payment", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText("Repayment recorded");
+  await expect(page.locator(".toast[role=status]")).toContainText(
+    "Repayment recorded",
+  );
   await page
     .getByRole("button", { name: "Sales & returns", exact: true })
     .click();
@@ -105,7 +109,9 @@ test("receive stock, sell strip and units, return and repay customer credit", as
   await page.getByLabel("Individual units to return").fill("2");
   await page.getByLabel("Reason").fill("Synthetic inspection test");
   await page.getByRole("button", { name: "Approve & post return" }).click();
-  await expect(page.getByRole("status")).toContainText("Stock quarantined");
+  await expect(page.locator(".toast[role=status]")).toContainText(
+    "Stock quarantined",
+  );
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Language & direction").selectOption("ur");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");

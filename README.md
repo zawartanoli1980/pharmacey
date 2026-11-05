@@ -82,6 +82,16 @@ Use **Show medicine pictures** in Inventory, POS or Settings. This is a browser 
 
 Owners and inventory operators can use **Add picture / Edit picture** in Inventory. They must confirm the medicine and strength match and that the image is approved for use. The server validates JPEG/PNG/WebP contents, a 2 MB limit, 32–4096 pixel source dimensions and static images. It resizes to at most 1600 pixels, re-encodes to WebP, strips metadata and saves an audit entry. Authenticated pharmacy-scoped image routes serve the pictures; no public upload directory is exposed. Migration 003 adds a separate image table without changing historical invoices or stock. Images are included in database backups. Prescription uploads remain unimplemented and must never be sent as product pictures.
 
+## Floating medicine gallery
+
+A dedicated **Medicine gallery** now appears across the authenticated pharmacy workspace. On desktop screens at least 1280 px wide it occupies a reserved right-side rail and stays visible when the page scrolls. On narrower screens it becomes a collapsible panel above the bottom safe area, with the workspace content scrolling in the space above it. It minimizes during mobile form entry so search and checkout remain usable. The header's **Show medicine gallery** button reopens it after dismissal. Display mode is remembered separately for each pharmacy/account in this browser.
+
+Cards show the brand, generic name, strength, dosage form, eligible unit availability and the actual minimum eligible batch price, labelled **From** per individual unit. Only products with a stored price show a price. Click a verified photo to open the existing enlarged-image preview. Products without a staff-verified picture use a labelled neutral placeholder and authorized image managers can open Inventory to add pictures. No medicine photographs are fabricated or bundled.
+
+Use previous/next buttons, Arrow keys, Home/End, or horizontal swipes to browse. RTL layouts mirror directional navigation and isolate medicine strengths from surrounding RTL text. Autoplay is **off by default**; the play button enables a slow 6.5-second interval. It pauses while hovered, focused, any dialog is open, the tab is hidden, or data is refreshing, and is disabled when reduced motion is preferred. The reusable component accepts `autoplayInterval` (minimum 5 seconds).
+
+The gallery uses the existing authenticated catalog and image routes, loads up to the catalog endpoint's existing 100-product limit, refreshes after recorded operations and once a minute while the tab is visible, and handles loading, missing images, empty catalogs and request failures. It is excluded from receipts and print layouts. The catalog's **Show medicine pictures** preference controls in-table/POS thumbnails; the independent gallery has its own minimize and close controls. Public website visitors do not receive a pharmacy's private catalog. No new storefront or public medicine feed is introduced.
+
 ## Windows PowerShell
 
 Extract the full ZIP. Double-click **Start-SmartMed.cmd** to launch from the correct folder; it installs missing dependencies first. Alternatively open PowerShell in the folder containing `package.json` and `package-lock.json`, then run each command in order:

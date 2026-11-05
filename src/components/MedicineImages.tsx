@@ -17,7 +17,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Modal from "./Modal";
-type Medicine = {
+export type Medicine = {
   id: number;
   name: string;
   strength?: string;
@@ -27,6 +27,7 @@ type Preferences = {
   visible: boolean;
   setVisible: (v: boolean) => void;
   preview: (p: Medicine) => void;
+  previewOpen: boolean;
 };
 const Context = createContext<Preferences | null>(null);
 export const picturePreferenceKey = (pharmacy: number, user: number) =>
@@ -64,7 +65,14 @@ export function ImagePreferencesProvider({
     return () => window.removeEventListener("storage", sync);
   }, [key]);
   return (
-    <Context.Provider value={{ visible, setVisible, preview: setPreview }}>
+    <Context.Provider
+      value={{
+        visible,
+        setVisible,
+        preview: setPreview,
+        previewOpen: !!preview,
+      }}
+    >
       {children}
       {preview && (
         <Modal
@@ -105,7 +113,7 @@ export function ImageVisibilityToggle() {
     </label>
   );
 }
-function SafeImage({ medicine }: { medicine: Medicine }) {
+export function SafeImage({ medicine }: { medicine: Medicine }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [medicine.id, medicine.image_version]);
   if (!medicine.image_version || failed)

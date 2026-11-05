@@ -74,10 +74,18 @@ export function FloatingActions({
     setExpanded(false);
   }, [reopenKey]);
   useEffect(() => {
-    const scroll = () => setScrolled(window.scrollY > 500);
+    const scroll = () =>
+      setScrolled(
+        window.scrollY > 500 ||
+          (document.querySelector(".workspace-content>main")?.scrollTop || 0) >
+            500,
+      );
     scroll();
-    window.addEventListener("scroll", scroll, { passive: true });
-    return () => window.removeEventListener("scroll", scroll);
+    document.addEventListener("scroll", scroll, {
+      passive: true,
+      capture: true,
+    });
+    return () => document.removeEventListener("scroll", scroll, true);
   }, []);
   useEffect(() => {
     const update = () => {
@@ -150,6 +158,16 @@ export function FloatingActions({
               <button
                 title="Back to top"
                 onClick={() => {
+                  document
+                    .querySelector(".workspace-content>main")
+                    ?.scrollTo({
+                      top: 0,
+                      behavior: window.matchMedia(
+                        "(prefers-reduced-motion: reduce)",
+                      ).matches
+                        ? "instant"
+                        : "smooth",
+                    });
                   window.scrollTo({
                     top: 0,
                     behavior: window.matchMedia(

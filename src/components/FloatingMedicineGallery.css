@@ -1,0 +1,876 @@
+:root {
+  --gallery-width: 280px;
+  --gallery-gap: 24px;
+  --gallery-top: 153px;
+  --gallery-color: #087c62;
+  --gallery-border: #d9e8de;
+}
+.workspace-content {
+  min-width: 0;
+  transition: padding-inline-end var(--motion-normal) var(--ease-standard);
+}
+.workspace-content.gallery-expanded {
+  padding-inline-end: calc(var(--gallery-width) + var(--gallery-gap) + 12px);
+}
+.workspace-content.gallery-minimized {
+  padding-inline-end: 76px;
+}
+.workspace-content > main {
+  width: 100%;
+  min-width: 0;
+}
+.floating-medicine-gallery {
+  position: fixed;
+  inset-block-start: var(--gallery-top);
+  inset-inline-end: var(--gallery-gap);
+  width: var(--gallery-width);
+  max-height: calc(100dvh - var(--gallery-top) - 18px);
+  overflow: auto;
+  scrollbar-width: thin;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.96);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--gallery-border);
+  border-radius: 18px;
+  box-shadow:
+    0 16px 50px #1b48331a,
+    0 2px 5px #1b483308;
+  backdrop-filter: blur(16px);
+  color: var(--text);
+}
+.floating-medicine-gallery.gallery-expanded {
+  animation: gallery-arrive var(--motion-normal) var(--ease-standard);
+}
+.gallery-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 16px 14px 13px;
+  border-bottom: 1px solid var(--border);
+}
+.gallery-symbol {
+  background: var(--soft);
+  color: var(--accent-text);
+  height: 34px;
+  width: 34px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.gallery-eyebrow {
+  font-size: 7px;
+  font-weight: 650;
+  letter-spacing: 1.5px;
+  color: #5a7a68;
+  display: block;
+  margin-bottom: 5px;
+}
+.gallery-header h2 {
+  font-size: 14px;
+  letter-spacing: -0.5px;
+  margin: 0;
+  outline-offset: 4px;
+  line-height: 1.3;
+}
+.gallery-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+.gallery-icon {
+  padding: 6px;
+  min-height: 30px;
+  min-width: 26px;
+  border-radius: 7px;
+  color: #6c8776;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color var(--motion-fast),
+    background var(--motion-fast);
+}
+.gallery-icon:hover {
+  background: var(--soft);
+  color: var(--accent-text);
+}
+.gallery-content {
+  padding: 12px;
+  outline-offset: -4px;
+  border-radius: 10px;
+  touch-action: pan-y;
+}
+.gallery-medicine-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.gallery-photo-stage {
+  height: 192px;
+  position: relative;
+  background: radial-gradient(ellipse at 50% 40%, #eef7f0, #e2eee5);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.gallery-verification {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-start: 10px;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 500;
+  color: #5c7567;
+  background: #ffffffd9;
+  padding: 5px 7px;
+  border: 1px solid #dce9df;
+  border-radius: 20px;
+  pointer-events: none;
+}
+.gallery-verification.verified {
+  color: #1e7753;
+}
+.gallery-photo-button {
+  width: 100%;
+  height: 100%;
+  padding: 32px 17px 22px;
+  position: relative;
+  display: block;
+  text-align: center;
+}
+.gallery-photo-button:focus-visible {
+  outline-offset: -5px;
+  border-radius: 12px;
+}
+.gallery-artwork {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  animation: medicine-float 5.5s ease-in-out infinite;
+}
+.gallery-artwork img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 9px 8px #1b48331c);
+}
+.gallery-photo-button:hover .gallery-artwork,
+.floating-medicine-gallery:focus-within .gallery-artwork {
+  animation-play-state: paused;
+}
+.gallery-enlarge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: absolute;
+  inset-inline-end: 8px;
+  bottom: 8px;
+  padding: 4px 6px;
+  color: #35634b;
+  font-size: 8px;
+  background: #ffffffdc;
+  border-radius: 5px;
+}
+.gallery-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 34px 15px 15px;
+  gap: 10px;
+}
+.gallery-photo-placeholder .image-fallback {
+  height: auto;
+  flex: 1;
+  gap: 9px;
+  color: #5b7b67;
+  font-size: 10px;
+}
+.gallery-photo-placeholder .image-fallback svg {
+  width: 40px;
+  height: 40px;
+  color: #6e9c81;
+}
+.gallery-photo-placeholder .text-button {
+  font-size: 10px;
+  color: #266c4d;
+}
+.gallery-product-details {
+  padding: 15px 14px 12px;
+  animation: gallery-details var(--motion-fast) ease-out;
+}
+.gallery-product-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.gallery-product-title h3 {
+  font-size: 19px;
+  line-height: 1.3;
+  letter-spacing: -0.6px;
+  overflow-wrap: anywhere;
+}
+.gallery-generic {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.gallery-strength {
+  font-size: 11px;
+  color: #4f6f5d;
+  margin-top: 9px;
+  line-height: 1.6;
+}
+.gallery-stock-price {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 11px;
+}
+.gallery-availability {
+  font-size: 10px;
+  color: #286c4d;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.gallery-availability i {
+  background: #4f9a71;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gallery-availability.unavailable {
+  color: #906438;
+}
+.gallery-availability.unavailable i {
+  background: #bc914e;
+}
+.gallery-price {
+  font-family: Manrope, sans-serif;
+  font-size: 21px;
+  letter-spacing: -0.7px;
+  line-height: 1.4;
+}
+.gallery-price small {
+  display: block;
+  font-family: "DM Sans", sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.gallery-footer {
+  padding: 0 14px 13px;
+}
+.gallery-carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 3px;
+}
+.gallery-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.gallery-arrow:hover,
+.gallery-play:hover {
+  background: var(--soft);
+  border-color: #9ec3ac;
+}
+[dir="rtl"] .gallery-arrow svg {
+  transform: rotate(180deg);
+}
+.gallery-position {
+  font-size: 11px;
+  color: var(--muted);
+  direction: ltr;
+  min-width: 36px;
+  text-align: center;
+}
+.gallery-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--accent-text);
+  margin-inline-start: auto;
+}
+.gallery-play[aria-pressed="true"] {
+  background: var(--soft);
+}
+.gallery-play-status {
+  font-size: 9px;
+  color: #557360;
+  margin-top: 9px;
+  line-height: 1.6;
+}
+.gallery-catalog-note {
+  font-size: 8px;
+  color: #667e6e;
+  line-height: 1.7;
+  margin-top: 5px;
+}
+.gallery-state {
+  min-height: 330px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 13px;
+  text-align: center;
+  padding: 22px 14px;
+  color: var(--muted);
+}
+.gallery-state > svg {
+  color: #7ba48b;
+}
+.gallery-state h3 {
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.gallery-state p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.gallery-state .secondary {
+  font-size: 10px;
+}
+.gallery-skeleton {
+  height: 192px;
+  width: 100%;
+  border-radius: 12px;
+  background: linear-gradient(110deg, var(--soft), var(--bg), var(--soft));
+  background-size: 200% 100%;
+  animation: gallery-skeleton 1.4s ease-in-out infinite;
+}
+.floating-medicine-gallery.gallery-minimized {
+  width: 54px;
+  border-radius: 15px;
+  overflow: visible;
+}
+.gallery-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px;
+  gap: 4px;
+}
+.gallery-mini > button:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 43px;
+  min-width: 38px;
+  color: var(--accent-text);
+  border-radius: 9px;
+}
+.gallery-mini > button:first-child:hover {
+  background: var(--soft);
+}
+.gallery-mini > button:first-child > span,
+.gallery-mini > button:first-child > svg:last-child {
+  display: none;
+}
+.gallery-obscured {
+  visibility: hidden;
+  pointer-events: none;
+}
+.gallery-reopen {
+  color: var(--green);
+}
+.workspace-content.gallery-expanded .page-heading {
+  flex-wrap: wrap;
+  align-items: start;
+}
+.workspace-content.gallery-expanded .stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.workspace-content.gallery-expanded .dashboard-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 1600px) {
+  .workspace-content.gallery-expanded .dashboard-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  }
+  .workspace-content.gallery-expanded .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1280px) and (max-width: 1440px) {
+  .workspace-content.gallery-expanded .pos-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workspace-content.gallery-expanded .cart {
+    position: static;
+    max-height: none;
+  }
+  .workspace-content.gallery-expanded .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .workspace-content.gallery-expanded .report-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workspace-content.gallery-expanded .expense-form {
+    flex-wrap: wrap;
+  }
+}
+@media (max-height: 730px) and (min-width: 1280px) {
+  .gallery-photo-stage {
+    height: 145px;
+  }
+  .gallery-header {
+    padding-block: 11px;
+  }
+  .gallery-product-details {
+    padding-block: 11px;
+  }
+  .gallery-stock-price {
+    gap: 6px;
+    margin-top: 9px;
+    padding-top: 8px;
+  }
+  .gallery-product-title h3 {
+    font-size: 17px;
+  }
+  .gallery-price {
+    font-size: 19px;
+  }
+  .gallery-content {
+    padding: 10px;
+  }
+  .gallery-footer {
+    padding-bottom: 10px;
+  }
+  .gallery-play-status {
+    margin-top: 6px;
+  }
+}
+@media (max-width: 1279px) {
+  .app .main {
+    height: var(--workspace-vh, 100dvh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .app .topbar {
+    flex-shrink: 0;
+    position: relative;
+    top: auto;
+  }
+  .app .floating-region {
+    flex-shrink: 0;
+    position: relative;
+    top: auto;
+    padding-bottom: 8px;
+    min-height: 60px;
+  }
+  .workspace-content,
+  .workspace-content.gallery-expanded,
+  .workspace-content.gallery-minimized {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    padding-inline-end: 0;
+    overflow: hidden;
+    transition: none;
+  }
+  .workspace-content > main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-top: 20px;
+    scroll-padding-bottom: 28px;
+    padding-bottom: 16px;
+    scrollbar-width: thin;
+    margin-block: 0;
+  }
+  .workspace-content > main input,
+  .workspace-content > main select,
+  .workspace-content > main textarea,
+  .workspace-content > main button,
+  .workspace-content > main [tabindex],
+  .workspace-content > main h1,
+  .workspace-content > main h2 {
+    scroll-margin-top: 20px;
+    scroll-margin-bottom: 28px;
+  }
+  .floating-medicine-gallery,
+  .floating-medicine-gallery.gallery-minimized {
+    position: relative;
+    inset: auto;
+    flex-shrink: 0;
+    width: auto;
+    margin: 0 15px calc(9px + env(safe-area-inset-bottom));
+    max-height: min(440px, 47vh);
+    border-radius: 15px;
+    z-index: 30;
+    overflow: auto;
+  }
+  .floating-medicine-gallery.gallery-minimized {
+    max-height: none;
+    overflow: hidden;
+  }
+  .gallery-mini {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 5px 8px;
+  }
+  .gallery-mini > button:first-child {
+    justify-content: start;
+    flex: 1;
+    font-size: 12px;
+    min-height: 35px;
+    padding: 4px 7px;
+  }
+  .gallery-mini > button:first-child > span,
+  .gallery-mini > button:first-child > svg:last-child {
+    display: inline;
+  }
+  .gallery-mini > button:first-child > svg:last-child {
+    margin-inline-start: auto;
+  }
+  .gallery-header {
+    padding: 10px 12px;
+  }
+  .gallery-header h2 {
+    font-size: 13px;
+  }
+  .gallery-eyebrow {
+    font-size: 6px;
+    margin-bottom: 3px;
+  }
+  .gallery-symbol {
+    width: 30px;
+    height: 30px;
+  }
+  .gallery-content {
+    padding: 9px 11px;
+  }
+  .gallery-medicine-card {
+    display: grid;
+    grid-template-columns: minmax(130px, 0.9fr) minmax(0, 1.1fr);
+  }
+  .gallery-photo-stage {
+    height: 188px;
+    min-height: 100%;
+    border-bottom: 0;
+    border-inline-end: 1px solid var(--border);
+  }
+  .gallery-photo-button {
+    padding: 32px 10px 23px;
+  }
+  .gallery-verification {
+    font-size: 7px;
+    padding: 4px 5px;
+    inset-inline-start: 7px;
+    inset-block-start: 7px;
+  }
+  .gallery-product-details {
+    padding: 13px 12px;
+  }
+  .gallery-product-title h3 {
+    font-size: 17px;
+  }
+  .gallery-generic {
+    font-size: 10px;
+  }
+  .gallery-strength {
+    font-size: 10px;
+    margin-top: 6px;
+  }
+  .gallery-stock-price {
+    margin-top: 8px;
+    padding-top: 8px;
+    gap: 5px;
+  }
+  .gallery-price {
+    font-size: 18px;
+  }
+  .gallery-availability {
+    font-size: 9px;
+  }
+  .gallery-price small {
+    font-size: 8px;
+  }
+  .gallery-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 0 12px;
+    padding: 0 12px 9px;
+  }
+  .gallery-carousel-controls {
+    padding: 0;
+    gap: 8px;
+  }
+  .gallery-play-status {
+    margin-top: 0;
+    font-size: 8px;
+  }
+  .gallery-catalog-note {
+    grid-column: 1/-1;
+    margin-top: 5px;
+    font-size: 7px;
+  }
+  .gallery-arrow {
+    height: 29px;
+    width: 29px;
+    border-radius: 7px;
+  }
+  .gallery-position {
+    font-size: 10px;
+    min-width: 30px;
+  }
+  .gallery-play {
+    height: 27px;
+    width: 27px;
+  }
+  .gallery-state {
+    min-height: 160px;
+    padding: 15px;
+    gap: 8px;
+  }
+  .gallery-state p {
+    font-size: 10px;
+  }
+  .gallery-skeleton {
+    height: 140px;
+  }
+  .gallery-photo-placeholder .image-fallback svg {
+    width: 33px;
+    height: 33px;
+  }
+  .gallery-photo-placeholder .image-fallback {
+    font-size: 9px;
+  }
+  .gallery-photo-placeholder .text-button {
+    font-size: 9px;
+  }
+  .workspace-content.gallery-expanded .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workspace-content .cart {
+    position: static;
+    max-height: none;
+  }
+  .app .toast {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 768px) and (max-width: 1279px) {
+  .gallery-medicine-card {
+    grid-template-columns: 160px minmax(0, 1fr);
+  }
+  .gallery-content {
+    padding: 10px 14px;
+  }
+  .gallery-photo-stage {
+    height: 155px;
+  }
+  .gallery-footer {
+    grid-template-columns: 200px 1fr;
+  }
+  .gallery-stock-price {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .gallery-price {
+    font-size: 20px;
+  }
+  .floating-medicine-gallery {
+    max-height: min(390px, 45vh);
+  }
+}
+@media (max-width: 650px) {
+  .app .top-actions {
+    gap: 7px;
+  }
+  .app .topbar {
+    padding-inline: 12px;
+  }
+  .app .breadcrumb {
+    gap: 6px;
+    font-size: 10px;
+  }
+  .app .breadcrumb > span {
+    display: none;
+  }
+  .app .gallery-reopen {
+    padding: 3px;
+  }
+  .app .floating-region {
+    min-height: 53px;
+    padding-bottom: 5px;
+  }
+  .floating-medicine-gallery,
+  .floating-medicine-gallery.gallery-minimized {
+    margin-inline: 10px;
+  }
+  .gallery-photo-stage {
+    height: 180px;
+  }
+  .gallery-product-title h3 {
+    font-size: 16px;
+  }
+  .gallery-generic {
+    font-size: 9px;
+  }
+  .gallery-product-title .rx-badge,
+  .gallery-product-title .badge {
+    font-size: 7px;
+    padding: 4px 5px;
+  }
+  .gallery-photo-placeholder {
+    padding-inline: 8px;
+  }
+  .gallery-photo-placeholder .text-button {
+    font-size: 8px;
+  }
+  .gallery-product-details {
+    padding: 11px 10px;
+  }
+  .gallery-stock-price {
+    gap: 4px;
+  }
+  .gallery-mini > button:first-child {
+    font-size: 11px;
+  }
+  .gallery-header {
+    padding-block: 8px;
+  }
+  .gallery-enlarge {
+    font-size: 7px;
+    gap: 2px;
+    inset-inline-end: 5px;
+  }
+  .gallery-catalog-note {
+    line-height: 1.5;
+  }
+}
+[data-theme="dark"] {
+  --gallery-border: #3c5c48;
+}
+[data-theme="dark"] .gallery-photo-stage {
+  background: radial-gradient(ellipse at 50% 40%, #2d4937, #20392b);
+}
+[data-theme="dark"] .gallery-eyebrow,
+[data-theme="dark"] .gallery-catalog-note,
+[data-theme="dark"] .gallery-play-status,
+[data-theme="dark"] .gallery-strength {
+  color: #b0c7b8;
+}
+[data-theme="dark"] .gallery-icon {
+  color: #b3c9b9;
+}
+[data-theme="dark"] .gallery-reopen {
+  color: var(--accent-text);
+}
+[data-theme="dark"] .gallery-availability {
+  color: #9bd5b4;
+}
+[data-theme="dark"] .gallery-availability.unavailable {
+  color: #e1ba7c;
+}
+[data-theme="dark"] .gallery-photo-placeholder .image-fallback {
+  color: #b8cfbd;
+}
+[data-theme="dark"] .gallery-photo-placeholder .text-button {
+  color: #9cddba;
+}
+@keyframes medicine-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes gallery-arrive {
+  from {
+    opacity: 0.6;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes gallery-details {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes gallery-skeleton {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-artwork,
+  .floating-medicine-gallery,
+  .gallery-product-details,
+  .gallery-skeleton {
+    animation: none !important;
+  }
+  .workspace-content {
+    transition: none !important;
+  }
+}
+@media print {
+  .floating-medicine-gallery,
+  .gallery-reopen {
+    display: none !important;
+  }
+  .app .main,
+  .workspace-content,
+  .workspace-content > main {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+}

@@ -65,7 +65,18 @@ export default function Modal({
       inertSiblings.forEach(([element, wasInert]) => {
         element.inert = wasInert;
       });
-      if (previous?.isConnected) previous.focus();
+      // A floating panel can remain inert until its modal observer commits.
+      // Restore focus after it becomes interactive instead of losing keyboard position.
+      const restoreFocus = (attempt = 0) => {
+        if (!previous?.isConnected) return;
+        if (previous.closest("[inert]")) {
+          if (attempt < 3)
+            requestAnimationFrame(() => restoreFocus(attempt + 1));
+          return;
+        }
+        previous.focus({ preventScroll: true });
+      };
+      restoreFocus();
     };
   }, []);
   return (

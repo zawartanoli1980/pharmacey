@@ -66,6 +66,13 @@ import {
   useImagePreferences,
 } from "./components/MedicineImages";
 import { StartupSplash, FloatingActions } from "./components/WorkspaceChrome";
+import {
+  FloatingMedicineGallery,
+  galleryPreferenceKey,
+  initialGalleryMode,
+  useWorkspaceViewport,
+  type GalleryMode,
+} from "./components/FloatingMedicineGallery";
 type Row = Record<string, any>;
 const money = (n: number = 0) =>
   new Intl.NumberFormat("en-PK", {
@@ -88,6 +95,16 @@ function App() {
     location.pathname.startsWith("/app") ? "app" : "public",
   );
   const [user, setUser] = useState<Row | null>(null);
+  const [galleryState, setGalleryState] = useState<{
+    scope: string;
+    mode: GalleryMode;
+  } | null>(null);
+  const [galleryFocus, setGalleryFocus] = useState<{
+    scope: string;
+    revision: number;
+  } | null>(null);
+  const galleryButton = useRef<HTMLButtonElement>(null);
+  const viewportHeight = useWorkspaceViewport();
   const [loading, setLoading] = useState(true);
   const [startupError, setStartupError] = useState("");
   const [dockDismissed, setDockDismissed] = useState(false);
@@ -121,6 +138,10 @@ function App() {
     setMobile(false);
     setError("");
     setInventoryFilter("All stock");
+    requestAnimationFrame(() => {
+      document.querySelector(".workspace-content>main")?.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0 });
+    });
   };
   const initialize = async () => {
     setLoading(true);
@@ -200,13 +221,37 @@ function App() {
       />
     );
   const canFinance = ["owner", "accountant"].includes(user.role);
+  const galleryScope = `${user.pharmacy_id}:${user.id}`;
+  const galleryMode =
+    galleryState?.scope === galleryScope
+      ? galleryState.mode
+      : initialGalleryMode(user.pharmacy_id, user.id);
+  const changeGalleryMode = (mode: GalleryMode) => {
+    setGalleryState({ scope: galleryScope, mode });
+    try {
+      localStorage.setItem(
+        galleryPreferenceKey(user.pharmacy_id, user.id),
+        mode,
+      );
+    } catch {
+      /* Browser storage is optional. */
+    }
+    if (mode === "closed")
+      galleryButton.current?.focus({ preventScroll: true });
+  };
+
   return (
     <ImagePreferencesProvider
       key={`${user.pharmacy_id}:${user.id}`}
       pharmacyId={user.pharmacy_id}
       userId={user.id}
     >
-      <div className="app">
+      <div
+        className="app"
+        style={
+          { "--workspace-vh": `${viewportHeight}px` } as React.CSSProperties
+        }
+      >
         <aside className={mobile ? "sidebar open" : "sidebar"}>
           <a
             className="brand"
@@ -339,6 +384,24 @@ function App() {
             </div>
             <div className="top-actions">
               <button
+                ref={galleryButton}
+                className="icon-button gallery-reopen"
+                aria-label="Show medicine gallery"
+                title="Show medicine picture gallery"
+                onClick={() => {
+                  changeGalleryMode("expanded");
+                  setGalleryFocus((previous) => ({
+                    scope: galleryScope,
+                    revision:
+                      previous?.scope === galleryScope
+                        ? previous.revision + 1
+                        : 1,
+                  }));
+                }}
+              >
+                <ImagePlus size={19} />
+              </button>
+              <button
                 className="icon-button"
                 aria-label="Show quick actions"
                 title="Show quick actions"
@@ -422,100 +485,114 @@ function App() {
               },
             ]}
           />
-          <main>
-            <div className="demo-banner">
-              <span>
-                <ShieldCheck size={15} />
-                Demo environment <b>·</b> All records are synthetic. No live
-                payments or patient data.
-              </span>
-              <button onClick={() => setModal("demo")}>
-                Learn more <ArrowUpRight size={13} />
-              </button>
-            </div>
-            {error && (
-              <div className="error" role="alert">
-                {error}
-                <button onClick={() => setError("")}>
-                  <X size={16} />
+          <div className={`workspace-content gallery-${galleryMode}`}>
+            <main>
+              <div className="demo-banner">
+                <span>
+                  <ShieldCheck size={15} />
+                  Demo environment <b>·</b> All records are synthetic. No live
+                  payments or patient data.
+                </span>
+                <button onClick={() => setModal("demo")}>
+                  Learn more <ArrowUpRight size={13} />
                 </button>
               </div>
-            )}
-            {page === "Overview" && (
-              <Dashboard key={version} go={go} fail={setError} />
-            )}
-            {page === "Point of sale" && (
-              <POS
-                key={version}
-                user={user}
-                refresh={refresh}
-                notify={notify}
-                fail={setError}
-              />
-            )}
-            {page === "Inventory" && (
-              <Inventory
-                key={version}
-                user={user}
-                refresh={refresh}
-                fail={setError}
-                receive={() => go("Purchases")}
-                initialFilter={inventoryFilter}
-              />
-            )}
-            {page === "Purchases" && (
-              <Purchases
-                key={version}
-                user={user}
-                refresh={refresh}
-                notify={notify}
-                fail={setError}
-              />
-            )}
-            {page === "Customers" && (
-              <Customers
-                key={version}
-                user={user}
-                refresh={refresh}
-                notify={notify}
-                fail={setError}
-              />
-            )}
-            {page === "Sales & returns" && (
-              <Sales
-                key={version}
-                user={user}
-                refresh={refresh}
-                notify={notify}
-                fail={setError}
-              />
-            )}
-            {page === "Reports" && (
-              <Reports
-                key={version}
-                refresh={refresh}
-                notify={notify}
-                fail={setError}
-              />
-            )}
-            {page === "Settings" && (
-              <SettingsPage
-                user={user}
-                dark={dark}
-                setDark={setDark}
-                urdu={urdu}
-                setUrdu={setUrdu}
-              />
-            )}
-            <footer className="app-footer">
-              <span>
-                SmartMed POS <b>·</b> A healthier way to manage your pharmacy.
-              </span>
-              <span>
-                Asia/Karachi <b>·</b> v0.1 demo
-              </span>
-            </footer>
-          </main>
+              {error && (
+                <div className="error" role="alert">
+                  {error}
+                  <button onClick={() => setError("")}>
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+              {page === "Overview" && (
+                <Dashboard key={version} go={go} fail={setError} />
+              )}
+              {page === "Point of sale" && (
+                <POS
+                  key={version}
+                  user={user}
+                  refresh={refresh}
+                  notify={notify}
+                  fail={setError}
+                />
+              )}
+              {page === "Inventory" && (
+                <Inventory
+                  key={version}
+                  user={user}
+                  refresh={refresh}
+                  fail={setError}
+                  receive={() => go("Purchases")}
+                  initialFilter={inventoryFilter}
+                />
+              )}
+              {page === "Purchases" && (
+                <Purchases
+                  key={version}
+                  user={user}
+                  refresh={refresh}
+                  notify={notify}
+                  fail={setError}
+                />
+              )}
+              {page === "Customers" && (
+                <Customers
+                  key={version}
+                  user={user}
+                  refresh={refresh}
+                  notify={notify}
+                  fail={setError}
+                />
+              )}
+              {page === "Sales & returns" && (
+                <Sales
+                  key={version}
+                  user={user}
+                  refresh={refresh}
+                  notify={notify}
+                  fail={setError}
+                />
+              )}
+              {page === "Reports" && (
+                <Reports
+                  key={version}
+                  refresh={refresh}
+                  notify={notify}
+                  fail={setError}
+                />
+              )}
+              {page === "Settings" && (
+                <SettingsPage
+                  user={user}
+                  dark={dark}
+                  setDark={setDark}
+                  urdu={urdu}
+                  setUrdu={setUrdu}
+                />
+              )}
+              <footer className="app-footer">
+                <span>
+                  SmartMed POS <b>·</b> A healthier way to manage your pharmacy.
+                </span>
+                <span>
+                  Asia/Karachi <b>·</b> v0.1 demo
+                </span>
+              </footer>
+            </main>
+            <FloatingMedicineGallery
+              mode={galleryMode}
+              onModeChange={changeGalleryMode}
+              revision={version}
+              focusRequest={
+                galleryFocus?.scope === galleryScope ? galleryFocus.revision : 0
+              }
+              canManageImages={["owner", "inventory"].includes(user.role)}
+              onManageImages={() => go("Inventory")}
+              suspended={mobile}
+              rtl={urdu}
+            />
+          </div>
         </div>
         {notice && (
           <div className="toast" role="status">

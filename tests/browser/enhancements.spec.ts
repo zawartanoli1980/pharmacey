@@ -243,8 +243,14 @@ test("medicine image failures, mobile dark RTL and reduced-motion layouts remain
       .evaluate((el) => getComputedStyle(el).animationName),
   ).toBe("none");
   await page.getByRole("button", { name: "Collapse quick actions" }).click();
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.locator(".workspace-content>main").evaluate((el) => {
+    el.scrollTo({ top: el.scrollHeight });
+  });
   await page.getByRole("button", { name: "Expand quick actions" }).click();
   await page.getByRole("button", { name: "Back to top", exact: true }).click();
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect
+    .poll(() =>
+      page.locator(".workspace-content>main").evaluate((el) => el.scrollTop),
+    )
+    .toBe(0);
 });
