@@ -17,7 +17,7 @@ Production asset smoke test:
 
 ```sh
 npm run build
-NODE_ENV=production npm start
+npm start
 ```
 
 Here “production” means serving compiled assets, not a declaration of security or business readiness. Keep `DEMO_MODE=true` for evaluation. Setting it false prevents seeding but does not provision real pharmacies or enable real integrations. **Never use the shared demo database or published passwords for patient information.**
@@ -54,13 +54,13 @@ All passwords: `DemoPass123!` (published synthetic accounts only).
 ## Verification
 
 ```sh
-npm test              # 9 business-rule tests, fresh in-memory databases
+npm test              # 9 business-rule tests + 5 image/migration tests
 npm run build         # TypeScript and optimized frontend build
 npm run test:http     # requires running demo server; mutates synthetic data
-npm run test:browser  # requires server and /usr/bin/chromium; synthetic UI workflows
+npm run test:browser  # requires server and Playwright Chromium
 ```
 
-Browser tests use an installed Chromium via `playwright.config.ts`. Change its executable path for another environment. HTTP and browser tests deliberately create synthetic transactions; do not run against real data. They should run serially, because the HTTP concurrency test temporarily quarantines demo Panadol batches and restores their original available status in a finally block.
+Install the browser once with `npx playwright install chromium`. Browser tests default to Playwright's managed Chromium on Windows, macOS and Linux. If using an existing browser, set `PLAYWRIGHT_EXECUTABLE_PATH` to its executable path. `PLAYWRIGHT_NO_SANDBOX=true` is an explicit option for restricted container environments; it is not required for normal Windows testing. HTTP and browser tests deliberately create synthetic transactions; do not run against real data. They should run serially, because the HTTP concurrency test temporarily quarantines demo Panadol batches and restores their original available status in a finally block.
 
 ## Backup and recovery
 
@@ -71,5 +71,38 @@ node server/backup.js check /tmp/smartmed-restored.sqlite
 ```
 
 Use fresh destination paths. To switch to restored data, stop the application, set `DATABASE_PATH` to the restored file, and restart. SQLite's backup API handles a live source consistently. Backups contain all pharmacies in this instance; only trusted system operators should access them. Automated scheduling, encryption, remote storage and retention are **not configured**. Keep copies outside the machine before it is destroyed.
+
+## Interface upgrade
+
+The public website and dashboard now share a motion system and a collapsible floating quick-action shelf. The shelf occupies a reserved area and hides while forms, on-screen keyboards or dialogs need the space. Its actions respect each account's role; the header button restores it after dismissal. A back-to-top action appears on long pages.
+
+The startup splash follows real server/session initialization. It adds no fixed waiting time, does not replay during in-app navigation, and offers a retry when connection fails. Reduced-motion preferences disable animated effects throughout the interface.
+
+Use **Show medicine pictures** in Inventory, POS or Settings. This is a browser preference scoped to the signed-in pharmacy and account; hiding pictures removes their containers and keeps product details and billing available. No branded product photography is included: unverified or missing pictures use neutral placeholders.
+
+Owners and inventory operators can use **Add picture / Edit picture** in Inventory. They must confirm the medicine and strength match and that the image is approved for use. The server validates JPEG/PNG/WebP contents, a 2 MB limit, 32–4096 pixel source dimensions and static images. It resizes to at most 1600 pixels, re-encodes to WebP, strips metadata and saves an audit entry. Authenticated pharmacy-scoped image routes serve the pictures; no public upload directory is exposed. Migration 003 adds a separate image table without changing historical invoices or stock. Images are included in database backups. Prescription uploads remain unimplemented and must never be sent as product pictures.
+
+## Windows PowerShell
+
+Extract the full ZIP. Double-click **Start-SmartMed.cmd** to launch from the correct folder; it installs missing dependencies first. Alternatively open PowerShell in the folder containing `package.json` and `package-lock.json`, then run each command in order:
+
+```powershell
+npm.cmd ci
+npm.cmd test
+npm.cmd run build
+npm.cmd run dev
+```
+
+Open `http://localhost:3000/app` on your own PC after the server starts. Keep the terminal open. Stop with Ctrl+C. This launcher is for local evaluation and does not configure a Windows service.
+
+To run browser tests, keep the server running and use a second PowerShell window in the same project folder:
+
+```powershell
+npx.cmd playwright install chromium
+npm.cmd run test:http
+npm.cmd run test:browser
+```
+
+Windows command syntax has been reviewed, but this session's actual executions took place on Linux; Windows runtime behavior remains to be verified on your PC.
 
 See [HANDOVER.md](HANDOVER.md) for acceptance coverage, limitations and remaining phases.

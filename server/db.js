@@ -1,4 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
 import { randomBytes, scryptSync } from "node:crypto";
 export function openDB(path = "data/smartmed.sqlite") {
   const db = new DatabaseSync(path);
@@ -33,6 +34,14 @@ export function openDB(path = "data/smartmed.sqlite") {
     );
   }
   db.exec("INSERT OR IGNORE INTO migrations VALUES(2);");
+  if (!db.prepare("SELECT version FROM migrations WHERE version=3").get()) {
+    db.exec(
+      readFileSync(
+        new URL("./migrations/003-product-images.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+  }
   return db;
 }
 export function hash(password, salt = randomBytes(16).toString("hex")) {

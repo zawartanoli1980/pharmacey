@@ -1,0 +1,14 @@
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS product_images (
+  product_id INTEGER PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+  pharmacy_id INTEGER NOT NULL REFERENCES pharmacies(id),
+  bytes BLOB NOT NULL,
+  width INTEGER NOT NULL CHECK(width BETWEEN 1 AND 1600),
+  height INTEGER NOT NULL CHECK(height BETWEEN 1 AND 1600),
+  version TEXT NOT NULL,
+  verified_by INTEGER NOT NULL REFERENCES users(id),
+  updated TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS product_images_pharmacy ON product_images(pharmacy_id);
+INSERT OR IGNORE INTO migrations VALUES(3);
+COMMIT;

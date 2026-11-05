@@ -50,8 +50,22 @@ import {
   CheckCircle2,
   Pill,
   Wallet,
+  Zap,
+  ImagePlus,
 } from "lucide-react";
 import "./style.css";
+import "./enhancements.css";
+import { api } from "./api";
+import Modal from "./components/Modal";
+import {
+  ImagePreferencesProvider,
+  ImageVisibilityToggle,
+  MedicineImage,
+  MedicineImageManager,
+  ImageManageButton,
+  useImagePreferences,
+} from "./components/MedicineImages";
+import { StartupSplash, FloatingActions } from "./components/WorkspaceChrome";
 type Row = Record<string, any>;
 const money = (n: number = 0) =>
   new Intl.NumberFormat("en-PK", {
@@ -60,16 +74,6 @@ const money = (n: number = 0) =>
     maximumFractionDigits: 2,
   }).format(n / 100);
 const number = (n: number = 0) => new Intl.NumberFormat("en-PK").format(n);
-async function api(path: string, body?: any, method?: string) {
-  const r = await fetch("/api" + path, {
-    method: method || (body ? "POST" : "GET"),
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const d = await r.json();
-  if (!r.ok) throw Error(d.error || "Request failed");
-  return d;
-}
 const nav = [
   ["Overview", LayoutDashboard],
   ["Point of sale", ShoppingCart],
@@ -85,6 +89,10 @@ function App() {
   );
   const [user, setUser] = useState<Row | null>(null);
   const [loading, setLoading] = useState(true);
+  const [startupError, setStartupError] = useState("");
+  const [dockDismissed, setDockDismissed] = useState(false);
+  const [dockRevision, setDockRevision] = useState(0);
+  const [inventoryFilter, setInventoryFilter] = useState("All stock");
   const [page, setPage] = useState("Overview");
   const [dark, setDark] = useState(localStorage.getItem("theme") === "dark");
   const [urdu, setUrdu] = useState(false);
@@ -112,11 +120,22 @@ function App() {
     setPage(s);
     setMobile(false);
     setError("");
+    setInventoryFilter("All stock");
   };
-  useEffect(() => {
-    api("/me")
-      .then((u) => {
-        setUser(u);
+  const initialize = async () => {
+    setLoading(true);
+    setStartupError("");
+    const signal = AbortSignal.timeout(10000);
+    try {
+      await api("/health", undefined, undefined, signal);
+      let u = null;
+      try {
+        u = await api("/me", undefined, undefined, signal);
+      } catch (e: any) {
+        if (e.status !== 401) throw e;
+      }
+      setUser(u);
+      if (u)
         setPage(
           ["owner", "accountant"].includes(u.role)
             ? "Overview"
@@ -124,9 +143,18 @@ function App() {
               ? "Inventory"
               : "Point of sale",
         );
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    } catch (e: any) {
+      setStartupError(
+        e.name === "TimeoutError"
+          ? "The server took too long to respond. Check your connection and retry."
+          : "The server is unavailable. Start SmartMed or check your connection, then retry.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    void initialize();
   }, []);
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
@@ -140,6 +168,8 @@ function App() {
     history.pushState({}, "", "/app");
     setMode("app");
   };
+  if (loading || startupError)
+    return <StartupSplash error={startupError} retry={initialize} />;
   if (mode === "public")
     return (
       <Public
@@ -149,7 +179,6 @@ function App() {
         }}
       />
     );
-  if (loading) return <div className="loading">Preparing your workspace…</div>;
   if (!user)
     return (
       <Login
@@ -172,289 +201,356 @@ function App() {
     );
   const canFinance = ["owner", "accountant"].includes(user.role);
   return (
-    <div className="app">
-      <aside className={mobile ? "sidebar open" : "sidebar"}>
-        <a
-          className="brand"
-          href="/"
-          onClick={(e) => {
-            e.preventDefault();
-            setMode("public");
-          }}
-        >
-          <span className="brand-icon">
-            <Activity size={25} />
-          </span>
-          <span>
-            SmartMed<span className="brand-pos"> POS</span>
-            <small>PHARMACY MANAGEMENT</small>
-          </span>
-        </a>
-        <div className="workspace">
-          <div className="workspace-icon">GC</div>
-          <div>
-            <strong>{user.pharmacy}</strong>
-            <small>Main branch · Lahore</small>
-          </div>
-          <ChevronDown size={15} />
-        </div>
-        <div className="nav-label">WORKSPACE</div>
-        <nav>
-          {nav
-            .filter(
-              ([n]) =>
-                (!["Overview", "Reports"].includes(n) || canFinance) &&
-                (!(n === "Inventory") || user.role !== "cashier") &&
-                (!(n === "Customers" || n === "Sales & returns") ||
-                  user.role !== "inventory") &&
-                (!(n === "Point of sale") ||
-                  ["owner", "cashier", "pharmacist"].includes(user.role)) &&
-                (!(n === "Purchases") ||
-                  ["owner", "inventory", "accountant"].includes(user.role)),
-            )
-            .map(([name, Icon]) => (
-              <button
-                key={name}
-                className={page === name ? "active" : ""}
-                onClick={() => go(name)}
-              >
-                <Icon size={19} />
-                <span>
-                  {urdu
-                    ? (
-                        {
-                          Overview: "جائزہ",
-                          "Point of sale": "فروخت",
-                          Inventory: "اسٹاک",
-                          Purchases: "خریداری",
-                          Customers: "گاہک",
-                          "Sales & returns": "فروخت اور واپسی",
-                          Reports: "رپورٹس",
-                        } as Row
-                      )[name]
-                    : name}
-                </span>
-                {name === "Point of sale" && <kbd>F2</kbd>}
-              </button>
-            ))}
-        </nav>
-        <div className="nav-label tools-label">MANAGE</div>
-        <nav>
-          <button
-            onClick={() => go("Settings")}
-            className={page === "Settings" ? "active" : ""}
-          >
-            <Settings size={19} />
-            Settings
-          </button>
-          <button onClick={() => setModal("help")}>
-            <HelpCircle size={19} />
-            Help & support
-            <ArrowUpRight size={14} />
-          </button>
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="plan">
-            <span className="plan-symbol">
-              <ShieldCheck size={19} />
-            </span>
-            <strong>Demo workspace</strong>
-            <p>Synthetic data. Explore with confidence.</p>
-            <button onClick={() => setModal("demo")}>
-              About this demo <ArrowRight size={14} />
-            </button>
-          </div>
-          <button
-            className="profile"
-            onClick={async () => {
-              await api("/logout", {});
-              setUser(null);
+    <ImagePreferencesProvider
+      key={`${user.pharmacy_id}:${user.id}`}
+      pharmacyId={user.pharmacy_id}
+      userId={user.id}
+    >
+      <div className="app">
+        <aside className={mobile ? "sidebar open" : "sidebar"}>
+          <a
+            className="brand"
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              setMode("public");
             }}
           >
-            <span className="avatar">
-              {user.name
-                .split(" ")
-                .map((n: string) => n[0])
-                .slice(0, 2)
-                .join("")}
+            <span className="brand-icon">
+              <Activity size={25} />
             </span>
             <span>
-              <strong>{user.name}</strong>
-              <small>{user.role} · Sign out</small>
+              SmartMed<span className="brand-pos"> POS</span>
+              <small>PHARMACY MANAGEMENT</small>
             </span>
-            <LogOut size={16} />
-          </button>
-        </div>
-      </aside>
-      <div className="main">
-        <header className="topbar">
-          <div className="breadcrumb">
-            <button
-              className="icon-button mobile-menu"
-              onClick={() => setMobile(!mobile)}
-            >
-              <Menu size={20} />
-            </button>
-            <span>Workspace</span>
-            <ChevronRight size={14} />
-            <strong>{page}</strong>
+          </a>
+          <div className="workspace">
+            <div className="workspace-icon">GC</div>
+            <div>
+              <strong>{user.pharmacy}</strong>
+              <small>Main branch · Lahore</small>
+            </div>
+            <ChevronDown size={15} />
           </div>
-          <div className="top-actions">
-            <span className="live">
-              <i />
-              {connected ? "Server connected" : "Connection unavailable"}
-            </span>
+          <div className="nav-label">WORKSPACE</div>
+          <nav>
+            {nav
+              .filter(
+                ([n]) =>
+                  (!["Overview", "Reports"].includes(n) || canFinance) &&
+                  (!(n === "Inventory") || user.role !== "cashier") &&
+                  (!(n === "Customers" || n === "Sales & returns") ||
+                    user.role !== "inventory") &&
+                  (!(n === "Point of sale") ||
+                    ["owner", "cashier", "pharmacist"].includes(user.role)) &&
+                  (!(n === "Purchases") ||
+                    ["owner", "inventory", "accountant"].includes(user.role)),
+              )
+              .map(([name, Icon]) => (
+                <button
+                  key={name}
+                  data-page={name}
+                  className={page === name ? "active" : ""}
+                  onClick={() => go(name)}
+                >
+                  <Icon size={19} />
+                  <span>
+                    {urdu
+                      ? (
+                          {
+                            Overview: "جائزہ",
+                            "Point of sale": "فروخت",
+                            Inventory: "اسٹاک",
+                            Purchases: "خریداری",
+                            Customers: "گاہک",
+                            "Sales & returns": "فروخت اور واپسی",
+                            Reports: "رپورٹس",
+                          } as Row
+                        )[name]
+                      : name}
+                  </span>
+                  {name === "Point of sale" && <kbd aria-hidden="true">F2</kbd>}
+                </button>
+              ))}
+          </nav>
+          <div className="nav-label tools-label">MANAGE</div>
+          <nav>
             <button
-              className="icon-button"
-              aria-label="Change language"
-              onClick={() => setUrdu(!urdu)}
+              data-page="Settings"
+              onClick={() => go("Settings")}
+              className={page === "Settings" ? "active" : ""}
             >
-              <Globe size={18} />
+              <Settings size={19} />
+              Settings
             </button>
-            <button
-              className="icon-button"
-              aria-label="Toggle theme"
-              onClick={() => setDark(!dark)}
-            >
-              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            <button onClick={() => setModal("help")}>
+              <HelpCircle size={19} />
+              Help & support
+              <ArrowUpRight size={14} />
             </button>
-            <button
-              className="icon-button notification"
-              aria-label="View stock alerts"
-              onClick={() => go("Inventory")}
-            >
-              <Bell size={19} />
-              <b />
-            </button>
-            <span className="avatar small">{user.name[0]}</span>
-          </div>
-        </header>
-        <main>
-          <div className="demo-banner">
-            <span>
-              <ShieldCheck size={15} />
-              Demo environment <b>·</b> All records are synthetic. No live
-              payments or patient data.
-            </span>
-            <button onClick={() => setModal("demo")}>
-              Learn more <ArrowUpRight size={13} />
-            </button>
-          </div>
-          {error && (
-            <div className="error" role="alert">
-              {error}
-              <button onClick={() => setError("")}>
-                <X size={16} />
+          </nav>
+          <div className="sidebar-bottom">
+            <div className="plan">
+              <span className="plan-symbol">
+                <ShieldCheck size={19} />
+              </span>
+              <strong>Demo workspace</strong>
+              <p>Synthetic data. Explore with confidence.</p>
+              <button onClick={() => setModal("demo")}>
+                About this demo <ArrowRight size={14} />
               </button>
             </div>
-          )}
-          {page === "Overview" && (
-            <Dashboard key={version} go={go} fail={setError} />
-          )}
-          {page === "Point of sale" && (
-            <POS
-              key={version}
-              user={user}
-              refresh={refresh}
-              notify={notify}
-              fail={setError}
-            />
-          )}
-          {page === "Inventory" && (
-            <Inventory
-              key={version}
-              user={user}
-              refresh={refresh}
-              fail={setError}
-              receive={() => go("Purchases")}
-            />
-          )}
-          {page === "Purchases" && (
-            <Purchases
-              key={version}
-              user={user}
-              refresh={refresh}
-              notify={notify}
-              fail={setError}
-            />
-          )}
-          {page === "Customers" && (
-            <Customers
-              key={version}
-              user={user}
-              refresh={refresh}
-              notify={notify}
-              fail={setError}
-            />
-          )}
-          {page === "Sales & returns" && (
-            <Sales
-              key={version}
-              user={user}
-              refresh={refresh}
-              notify={notify}
-              fail={setError}
-            />
-          )}
-          {page === "Reports" && (
-            <Reports
-              key={version}
-              refresh={refresh}
-              notify={notify}
-              fail={setError}
-            />
-          )}
-          {page === "Settings" && (
-            <SettingsPage
-              user={user}
-              dark={dark}
-              setDark={setDark}
-              urdu={urdu}
-              setUrdu={setUrdu}
-            />
-          )}
-          <footer className="app-footer">
-            <span>
-              SmartMed POS <b>·</b> A healthier way to manage your pharmacy.
-            </span>
-            <span>
-              Asia/Karachi <b>·</b> v0.1 demo
-            </span>
-          </footer>
-        </main>
-      </div>
-      {notice && (
-        <div className="toast" role="status">
-          <CheckCircle2 size={20} />
-          {notice}
+            <button
+              className="profile"
+              onClick={async () => {
+                await api("/logout", {});
+                setUser(null);
+              }}
+            >
+              <span className="avatar">
+                {user.name
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .slice(0, 2)
+                  .join("")}
+              </span>
+              <span>
+                <strong>{user.name}</strong>
+                <small>{user.role} · Sign out</small>
+              </span>
+              <LogOut size={16} />
+            </button>
+          </div>
+        </aside>
+        <div className="main">
+          <header className="topbar">
+            <div className="breadcrumb">
+              <button
+                className="icon-button mobile-menu"
+                aria-label="Toggle navigation"
+                aria-expanded={mobile}
+                onClick={() => setMobile(!mobile)}
+              >
+                <Menu size={20} />
+              </button>
+              <span>Workspace</span>
+              <ChevronRight size={14} />
+              <strong>{page}</strong>
+            </div>
+            <div className="top-actions">
+              <button
+                className="icon-button"
+                aria-label="Show quick actions"
+                title="Show quick actions"
+                onClick={() => {
+                  setDockDismissed(false);
+                  setDockRevision((v) => v + 1);
+                }}
+              >
+                <Zap size={18} />
+              </button>
+              <span className="live">
+                <i />
+                {connected ? "Server connected" : "Connection unavailable"}
+              </span>
+              <button
+                className="icon-button"
+                aria-label="Change language"
+                onClick={() => setUrdu(!urdu)}
+              >
+                <Globe size={18} />
+              </button>
+              <button
+                className="icon-button"
+                aria-label="Toggle theme"
+                onClick={() => setDark(!dark)}
+              >
+                {dark ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              {["owner", "inventory", "pharmacist", "accountant"].includes(
+                user.role,
+              ) && (
+                <button
+                  className="icon-button notification"
+                  aria-label="View stock alerts"
+                  onClick={() => go("Inventory")}
+                >
+                  <Bell size={19} />
+                  <b />
+                </button>
+              )}
+              <span className="avatar small">{user.name[0]}</span>
+            </div>
+          </header>
+          <FloatingActions
+            dismissed={dockDismissed}
+            onDismiss={() => setDockDismissed(true)}
+            reopenKey={dockRevision}
+            actions={[
+              ...(["owner", "cashier", "pharmacist"].includes(user.role)
+                ? [
+                    {
+                      label: "New sale",
+                      icon: ShoppingCart,
+                      run: () => go("Point of sale"),
+                    },
+                  ]
+                : []),
+              ...(["owner", "inventory", "pharmacist", "accountant"].includes(
+                user.role,
+              )
+                ? [
+                    {
+                      label: "Open inventory",
+                      icon: Boxes,
+                      run: () => go("Inventory"),
+                    },
+                    {
+                      label: "Stock alerts",
+                      icon: Bell,
+                      run: () => {
+                        go("Inventory");
+                        setInventoryFilter("Needs attention");
+                      },
+                    },
+                  ]
+                : []),
+              {
+                label: "Help & support",
+                icon: HelpCircle,
+                run: () => setModal("help"),
+              },
+            ]}
+          />
+          <main>
+            <div className="demo-banner">
+              <span>
+                <ShieldCheck size={15} />
+                Demo environment <b>·</b> All records are synthetic. No live
+                payments or patient data.
+              </span>
+              <button onClick={() => setModal("demo")}>
+                Learn more <ArrowUpRight size={13} />
+              </button>
+            </div>
+            {error && (
+              <div className="error" role="alert">
+                {error}
+                <button onClick={() => setError("")}>
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+            {page === "Overview" && (
+              <Dashboard key={version} go={go} fail={setError} />
+            )}
+            {page === "Point of sale" && (
+              <POS
+                key={version}
+                user={user}
+                refresh={refresh}
+                notify={notify}
+                fail={setError}
+              />
+            )}
+            {page === "Inventory" && (
+              <Inventory
+                key={version}
+                user={user}
+                refresh={refresh}
+                fail={setError}
+                receive={() => go("Purchases")}
+                initialFilter={inventoryFilter}
+              />
+            )}
+            {page === "Purchases" && (
+              <Purchases
+                key={version}
+                user={user}
+                refresh={refresh}
+                notify={notify}
+                fail={setError}
+              />
+            )}
+            {page === "Customers" && (
+              <Customers
+                key={version}
+                user={user}
+                refresh={refresh}
+                notify={notify}
+                fail={setError}
+              />
+            )}
+            {page === "Sales & returns" && (
+              <Sales
+                key={version}
+                user={user}
+                refresh={refresh}
+                notify={notify}
+                fail={setError}
+              />
+            )}
+            {page === "Reports" && (
+              <Reports
+                key={version}
+                refresh={refresh}
+                notify={notify}
+                fail={setError}
+              />
+            )}
+            {page === "Settings" && (
+              <SettingsPage
+                user={user}
+                dark={dark}
+                setDark={setDark}
+                urdu={urdu}
+                setUrdu={setUrdu}
+              />
+            )}
+            <footer className="app-footer">
+              <span>
+                SmartMed POS <b>·</b> A healthier way to manage your pharmacy.
+              </span>
+              <span>
+                Asia/Karachi <b>·</b> v0.1 demo
+              </span>
+            </footer>
+          </main>
         </div>
-      )}
-      {modal && (
-        <Modal
-          title={
-            modal === "help" ? "Help & support" : "A safe space to explore"
-          }
-          close={() => setModal("")}
-        >
-          <p>
-            This is an isolated, synthetic demonstration of SmartMed POS. Sales,
-            stock, purchases and customer balances persist in this environment.
-          </p>
-          <p>
-            Payment methods record collections only. No gateway is connected.
-            Prescription uploads, online orders and offline sales are not
-            enabled.
-          </p>
-          <p>
-            For getting started, receive a batch in Purchases, open Point of
-            sale, then review your invoice in Sales & returns.
-          </p>
-          <button className="primary" onClick={() => setModal("")}>
-            Got it
-          </button>
-        </Modal>
-      )}
-    </div>
+        {notice && (
+          <div className="toast" role="status">
+            <CheckCircle2 size={20} />
+            {notice}
+          </div>
+        )}
+        {modal && (
+          <Modal
+            title={
+              modal === "help" ? "Help & support" : "A safe space to explore"
+            }
+            close={() => setModal("")}
+          >
+            <p>
+              This is an isolated, synthetic demonstration of SmartMed POS.
+              Sales, stock, purchases and customer balances persist in this
+              environment.
+            </p>
+            <p>
+              Payment methods record collections only. No gateway is connected.
+              Prescription uploads, online orders and offline sales are not
+              enabled.
+            </p>
+            <p>
+              For getting started, receive a batch in Purchases, open Point of
+              sale, then review your invoice in Sales & returns.
+            </p>
+            <button className="primary" onClick={() => setModal("")}>
+              Got it
+            </button>
+          </Modal>
+        )}
+      </div>
+    </ImagePreferencesProvider>
   );
 }
 function useData(path: string, fail: (s: string) => void) {
@@ -607,7 +703,7 @@ function Dashboard({
             </div>
             <span className="legend">
               <i />
-              Net sales
+              Sales before returns
             </span>
           </div>
           <div className="chart-summary">
@@ -871,73 +967,6 @@ function Empty({
     </div>
   );
 }
-function Modal({
-  title,
-  close,
-  children,
-}: {
-  title: string;
-  close: () => void;
-  children: React.ReactNode;
-}) {
-  const dialog = useRef<HTMLElement>(null);
-  const onClose = useRef(close);
-  onClose.current = close;
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const root = dialog.current;
-    const selectors =
-      'button:not(:disabled),a[href],input:not([tabindex="-1"]),select,textarea,[tabindex="0"]';
-    const nodes = () =>
-      Array.from(root?.querySelectorAll<HTMLElement>(selectors) || []).filter(
-        (el) => el.offsetParent !== null,
-      );
-    nodes()[0]?.focus();
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose.current();
-      }
-      if (e.key === "Tab") {
-        const list = nodes(),
-          first = list[0],
-          last = list[list.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("keydown", key);
-      previous?.focus();
-    };
-  }, []);
-  return (
-    <div className="modal-backdrop" onClick={close}>
-      <section
-        ref={dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-heading">
-          <h2>{title}</h2>
-          <button className="icon-button" aria-label="Close" onClick={close}>
-            <X size={20} />
-          </button>
-        </div>
-        {children}
-      </section>
-    </div>
-  );
-}
 function Login({
   onLogin,
   back,
@@ -1062,6 +1091,7 @@ function Login({
   );
 }
 function POS({ user, refresh, notify, fail }: any) {
+  const { visible: showPictures } = useImagePreferences();
   const [q, setQ] = useState("");
   const products: Row[] =
     useData("/products?q=" + encodeURIComponent(q), fail) || [];
@@ -1125,7 +1155,9 @@ function POS({ user, refresh, notify, fail }: any) {
         eyebrow="FAST, THOUGHTFUL CHECKOUT"
         title="Point of sale"
         sub="Find a medicine. Build a bill. Get back to care."
-      />
+      >
+        <ImageVisibilityToggle />
+      </Title>
       <div className="pos-layout">
         <section>
           <div className="search-box">
@@ -1147,41 +1179,57 @@ function POS({ user, refresh, notify, fail }: any) {
           </div>
           <div className="product-grid">
             {products.map((p) => (
-              <button
-                className="product-card"
+              <article
+                className={`product-card ${showPictures ? "with-picture" : "compact-product"}`}
                 key={p.id}
-                onClick={() => add(p)}
-                disabled={!p.stock}
               >
-                <div className="product-card-top">
-                  <span className="product-icon">
-                    <Pill size={24} />
+                <MedicineImage
+                  medicine={{
+                    id: p.id,
+                    name: p.name,
+                    strength: p.strength,
+                    image_version: p.image_version,
+                  }}
+                />
+                <button
+                  className="product-select"
+                  onClick={() => add(p)}
+                  disabled={!p.stock}
+                  aria-label={`Add ${p.name} ${p.strength} to bill`}
+                >
+                  <div className="product-card-top">
+                    <span className={p.rx ? "rx-badge" : "badge"}>
+                      {p.rx ? "Rx" : "OTC"}
+                    </span>
+                    <span className="product-selection-hint">
+                      {p.stock ? "Add to bill" : "Out of stock"}
+                    </span>
+                  </div>
+                  <h3>
+                    {p.name}{" "}
+                    <small>
+                      <bdi dir="ltr">{p.strength}</bdi>
+                    </small>
+                  </h3>
+                  <p>
+                    <bdi dir="ltr">{p.generic}</bdi>
+                  </p>
+                  <span className="product-form" dir="ltr">
+                    {p.form} · {p.box_units} units / box
                   </span>
-                  {p.rx ? (
-                    <span className="rx-badge">Rx</span>
-                  ) : (
-                    <span className="badge">OTC</span>
-                  )}
-                </div>
-                <h3>
-                  {p.name} <small>{p.strength}</small>
-                </h3>
-                <p>{p.generic}</p>
-                <span className="product-form">
-                  {p.form} · {p.box_units} units / box
-                </span>
-                <div className="product-card-bottom">
-                  <strong>
-                    {money(p.price)}
-                    <small>/ unit, from</small>
-                  </strong>
-                  <span
-                    className={p.stock <= p.reorder ? "stock low" : "stock"}
-                  >
-                    {number(p.stock)} available
-                  </span>
-                </div>
-              </button>
+                  <div className="product-card-bottom">
+                    <strong>
+                      {money(p.price)}
+                      <small dir="ltr">/ unit, from</small>
+                    </strong>
+                    <span
+                      className={p.stock <= p.reorder ? "stock low" : "stock"}
+                    >
+                      {number(p.stock)} available
+                    </span>
+                  </div>
+                </button>
+              </article>
             ))}
           </div>
           {!products.length && (
@@ -1537,9 +1585,17 @@ function Receipt({ invoice, close }: any) {
     </Modal>
   );
 }
-function Inventory({ user, refresh, fail, receive }: any) {
+function Inventory({
+  user,
+  refresh,
+  fail,
+  receive,
+  initialFilter = "All stock",
+}: any) {
+  const [imageMedicine, setImageMedicine] = useState<Row | null>(null);
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("All stock");
+  const [filter, setFilter] = useState(initialFilter);
+  useEffect(() => setFilter(initialFilter), [initialFilter]);
   const rows: Row[] = useData("/batches", fail) || [];
   const shown = rows.filter(
     (b) =>
@@ -1547,6 +1603,10 @@ function Inventory({ user, refresh, fail, receive }: any) {
       (filter === "All stock" ||
         (filter === "Low stock" && b.quantity < 30) ||
         (filter === "Restricted" && b.status !== "available") ||
+        (filter === "Needs attention" &&
+          (b.quantity < 30 ||
+            b.status !== "available" ||
+            new Date(b.expiry).getTime() - Date.now() < 90 * 86400000)) ||
         (filter === "Near expiry" &&
           new Date(b.expiry).getTime() - Date.now() < 90 * 86400000)),
   );
@@ -1557,10 +1617,13 @@ function Inventory({ user, refresh, fail, receive }: any) {
         title="Inventory"
         sub="Know what you have, where it is, and when it expires."
       >
-        <button className="primary" onClick={receive}>
-          <Plus size={17} />
-          Receive stock
-        </button>
+        <ImageVisibilityToggle />
+        {["owner", "inventory"].includes(user.role) && (
+          <button className="primary" onClick={receive}>
+            <Plus size={17} />
+            Receive stock
+          </button>
+        )}
       </Title>
       <div className="mini-stats">
         <div>
@@ -1585,17 +1648,21 @@ function Inventory({ user, refresh, fail, receive }: any) {
       <section className="panel">
         <div className="table-toolbar">
           <div className="tabs">
-            {["All stock", "Low stock", "Near expiry", "Restricted"].map(
-              (f) => (
-                <button
-                  className={filter === f ? "selected" : ""}
-                  key={f}
-                  onClick={() => setFilter(f)}
-                >
-                  {f}
-                </button>
-              ),
-            )}
+            {[
+              "All stock",
+              "Low stock",
+              "Near expiry",
+              "Restricted",
+              "Needs attention",
+            ].map((f) => (
+              <button
+                className={filter === f ? "selected" : ""}
+                key={f}
+                onClick={() => setFilter(f)}
+              >
+                {f}
+              </button>
+            ))}
           </div>
           <div className="search-box compact">
             <Search size={16} />
@@ -1623,12 +1690,21 @@ function Inventory({ user, refresh, fail, receive }: any) {
                 <tr key={b.id}>
                   <td>
                     <div className="medicine-cell">
-                      <span className="product-icon">
-                        <Pill size={18} />
-                      </span>
+                      <MedicineImage
+                        medicine={{
+                          id: b.product_id,
+                          name: b.name,
+                          strength: b.strength,
+                          image_version: b.image_version,
+                        }}
+                        compact
+                      />
                       <span>
                         <strong>
-                          {b.name} <small>{b.strength}</small>
+                          {b.name}{" "}
+                          <small>
+                            <bdi dir="ltr">{b.strength}</bdi>
+                          </small>
                         </strong>
                         <small>
                           {b.number} · {b.supplier}
@@ -1687,6 +1763,23 @@ function Inventory({ user, refresh, fail, receive }: any) {
                     ) : (
                       <span className="muted">Restricted</span>
                     )}
+                    {["owner", "inventory"].includes(user.role) && (
+                      <ImageManageButton
+                        medicine={{
+                          id: b.product_id,
+                          name: b.name,
+                          image_version: b.image_version,
+                        }}
+                        onClick={() =>
+                          setImageMedicine({
+                            id: b.product_id,
+                            name: b.name,
+                            strength: b.strength,
+                            image_version: b.image_version,
+                          })
+                        }
+                      />
+                    )}
                   </td>
                 </tr>
               ))}
@@ -1707,6 +1800,13 @@ function Inventory({ user, refresh, fail, receive }: any) {
         </div>
       </section>
       <MovementTable fail={fail} />
+      {imageMedicine && (
+        <MedicineImageManager
+          medicine={imageMedicine as any}
+          close={() => setImageMedicine(null)}
+          onSaved={refresh}
+        />
+      )}
     </>
   );
 }
@@ -2407,6 +2507,7 @@ function SettingsPage({ user, dark, setDark, urdu, setUrdu }: any) {
             <label>
               Appearance
               <select
+                aria-label="Appearance"
                 value={dark ? "dark" : "light"}
                 onChange={(e) => setDark(e.target.value === "dark")}
               >
@@ -2425,6 +2526,11 @@ function SettingsPage({ user, dark, setDark, urdu, setUrdu }: any) {
                 <option value="ur">اردو · RTL (partial translation)</option>
               </select>
             </label>
+            <ImageVisibilityToggle />
+            <p>
+              Picture visibility is saved on this browser for your account and
+              pharmacy.
+            </p>
             <p>Currency: PKR · Time zone: Asia/Karachi</p>
             <p>
               Signed in as {user.email} · {user.role}
@@ -2461,6 +2567,8 @@ function SettingsPage({ user, dark, setDark, urdu, setUrdu }: any) {
   );
 }
 function Public({ onEnter, onDemo }: any) {
+  const [dockDismissed, setDockDismissed] = useState(false);
+  const [dockRevision, setDockRevision] = useState(0);
   const [page, setPage] = useState("Home");
   const [form, setForm] = useState("");
   const [status, setStatus] = useState("");
@@ -2501,6 +2609,17 @@ function Public({ onEnter, onDemo }: any) {
   return (
     <div className="public">
       <header className="public-nav">
+        <button
+          className="icon-button public-quick-restore"
+          aria-label="Show quick actions"
+          title="Show quick actions"
+          onClick={() => {
+            setDockDismissed(false);
+            setDockRevision((v) => v + 1);
+          }}
+        >
+          <Zap size={18} />
+        </button>
         <a
           className="brand"
           href="/"
@@ -2540,6 +2659,35 @@ function Public({ onEnter, onDemo }: any) {
           </button>
         </div>
       </header>
+      <FloatingActions
+        dismissed={dockDismissed}
+        onDismiss={() => setDockDismissed(true)}
+        reopenKey={dockRevision}
+        actions={[
+          {
+            label: "Book a demo",
+            icon: Clock,
+            run: () => {
+              setForm("Book a Demo");
+              setStatus("");
+            },
+          },
+          {
+            label: "Explore interactive demo",
+            icon: LayoutDashboard,
+            run: onDemo,
+          },
+          {
+            label: "Help & support",
+            icon: HelpCircle,
+            run: () => {
+              setPage("Support");
+              window.scrollTo({ top: 0 });
+            },
+          },
+        ]}
+      />
+
       {page === "Home" ? (
         <>
           <section className="hero">

@@ -1,4 +1,5 @@
 import express from "express";
+import { registerImageRoutes } from "./images.js";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import {
@@ -104,6 +105,7 @@ const allow =
       : res
           .status(403)
           .json({ error: "Your role does not permit this action" });
+registerImageRoutes(app, db, allow, rate);
 app.get("/api/me", (req, res) =>
   res.json({
     ...req.user,
@@ -123,7 +125,7 @@ app.get("/api/products", (req, res) => {
   res.json(
     db
       .prepare(
-        `SELECT p.*,COALESCE(sum(CASE WHEN b.status='available' AND b.expiry>=date('now','+5 hours') THEN b.quantity ELSE 0 END),0) stock,min(CASE WHEN b.status='available' AND b.expiry>=date('now','+5 hours') AND b.quantity>0 THEN b.price END) price,min(CASE WHEN b.status='available' AND b.quantity>0 THEN b.expiry END) expiry FROM products p LEFT JOIN batches b ON b.product_id=p.id WHERE p.pharmacy_id=? AND (p.name LIKE ? OR p.generic LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ? OR p.strength LIKE ?) GROUP BY p.id ORDER BY p.name LIMIT 100`,
+        `SELECT p.*,im.version image_version,COALESCE(sum(CASE WHEN b.status='available' AND b.expiry>=date('now','+5 hours') THEN b.quantity ELSE 0 END),0) stock,min(CASE WHEN b.status='available' AND b.expiry>=date('now','+5 hours') AND b.quantity>0 THEN b.price END) price,min(CASE WHEN b.status='available' AND b.quantity>0 THEN b.expiry END) expiry FROM products p LEFT JOIN batches b ON b.product_id=p.id LEFT JOIN product_images im ON im.product_id=p.id AND im.pharmacy_id=p.pharmacy_id WHERE p.pharmacy_id=? AND (p.name LIKE ? OR p.generic LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ? OR p.strength LIKE ?) GROUP BY p.id ORDER BY p.name LIMIT 100`,
       )
       .all(req.user.pharmacy_id, q, q, q, q, q),
   );
@@ -135,7 +137,7 @@ app.get(
     res.json(
       db
         .prepare(
-          "SELECT b.*,p.name,p.strength FROM batches b JOIN products p ON p.id=b.product_id WHERE b.pharmacy_id=? ORDER BY b.expiry,b.id LIMIT 500",
+          "SELECT b.*,p.name,p.strength,im.version image_version FROM batches b JOIN products p ON p.id=b.product_id LEFT JOIN product_images im ON im.product_id=p.id AND im.pharmacy_id=b.pharmacy_id WHERE b.pharmacy_id=? ORDER BY b.expiry,b.id LIMIT 500",
         )
         .all(req.user.pharmacy_id),
     ),
@@ -473,13 +475,11 @@ app.get("/api/export", allow("owner", "accountant"), (req, res) => {
 });
 app.use((err, req, res, next) => {
   if (!err.status) console.error(err.message);
-  res
-    .status(err.status || 500)
-    .json({
-      error: err.status
-        ? err.message
-        : "Operation failed. No partial changes were saved.",
-    });
+  res.status(err.status || 500).json({
+    error: err.status
+      ? err.message
+      : "Operation failed. No partial changes were saved.",
+  });
 });
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("dist"));

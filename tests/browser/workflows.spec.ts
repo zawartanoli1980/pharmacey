@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 test("public pages, request form and mobile layout", async ({ page }) => {
   await page.goto("/");
   await expect(
@@ -23,7 +25,7 @@ test("public pages, request form and mobile layout", async ({ page }) => {
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({
-    path: "/tmp/smartmed-public-mobile.png",
+    path: join(tmpdir(), "smartmed-public-mobile.png"),
     fullPage: true,
   });
   expect(
@@ -45,7 +47,7 @@ test("receive stock, sell strip and units, return and repay customer credit", as
     }),
   ).toBeVisible();
   await page.screenshot({
-    path: "/tmp/smartmed-dashboard.png",
+    path: join(tmpdir(), "smartmed-dashboard.png"),
     fullPage: true,
   });
   await page.getByRole("button", { name: "Purchases", exact: true }).click();
@@ -69,14 +71,21 @@ test("receive stock, sell strip and units, return and repay customer credit", as
     .getByPlaceholder("Search medicine, generic, SKU or scan barcode…")
     .fill("Panadol");
   await expect(page.locator(".product-card")).toHaveCount(1);
-  await page.locator(".product-card").filter({ hasText: "Panadol" }).click();
+  await page
+    .getByRole("button", { name: "Add Panadol 500 mg to bill" })
+    .click();
   await page.getByLabel("Unit for Panadol").selectOption("strip");
   await page.getByLabel("Customer", { exact: true }).selectOption("1");
   await page.getByLabel("Amount tendered (PKR)").fill("10");
   await page.getByRole("button", { name: "Complete sale" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator(".receipt")).toContainText("Rs 40");
-  await page.screenshot({ path: "/tmp/smartmed-receipt.png" });
+  await page.screenshot({ path: join(tmpdir(), "smartmed-receipt.png") });
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator(".receipt")).toBeVisible();
+  await expect(page.locator(".floating-region")).toBeHidden();
+  await expect(page.locator(".receipt img")).toHaveCount(0);
+  await page.emulateMedia({ media: "screen" });
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "Customers", exact: true }).click();
   const customer = page.getByRole("row").filter({ hasText: "Sara Ahmed" });
@@ -107,7 +116,7 @@ test("receive stock, sell strip and units, return and repay customer credit", as
     ),
   ).toBeTruthy();
   await page.screenshot({
-    path: "/tmp/smartmed-urdu-mobile.png",
+    path: join(tmpdir(), "smartmed-urdu-mobile.png"),
     fullPage: true,
   });
   expect(errors).toEqual([]);

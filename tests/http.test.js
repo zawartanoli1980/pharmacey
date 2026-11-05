@@ -117,3 +117,63 @@ test("HTTP authorization, tenant isolation, concurrent sales and accounting", as
       });
   }
 });
+
+test("medicine images validate contents, enforce roles and isolate pharmacies", async () => {
+  const { default: sharp } = await import("sharp");
+  const owner = await login("owner"),
+    cashier = await login("cashier"),
+    inventory = await login("inventory"),
+    other = await login("other");
+  const image = await sharp({
+    create: { width: 96, height: 72, channels: 3, background: "#dcece2" },
+  })
+    .png()
+    .toBuffer();
+  const upload = (
+    cookie,
+    body = image,
+    mime = "image/png",
+    verified = "true",
+  ) =>
+    fetch(base + "/api/products/1/image", {
+      method: "POST",
+      headers: {
+        Cookie: cookie,
+        "Content-Type": mime,
+        "X-Image-Verified": verified,
+      },
+      body,
+    });
+  assert.equal((await upload(cashier)).status, 403);
+  assert.equal((await upload(other)).status, 404);
+  assert.equal((await upload(owner, image, "image/png", "false")).status, 400);
+  assert.equal((await upload(owner, image, "image/jpeg")).status, 400);
+  assert.equal(
+    (await upload(owner, Buffer.from("<svg/>"), "image/svg+xml")).status,
+    415,
+  );
+  assert.equal(
+    (await upload(owner, Buffer.alloc(2 * 1024 * 1024 + 1))).status,
+    413,
+  );
+  const saved = await upload(inventory);
+  assert.equal(saved.status, 200);
+  const { version } = await saved.json();
+  assert.ok(version);
+  const served = await req("/products/1/image", cashier);
+  assert.equal(served.status, 200);
+  assert.match(served.headers.get("content-type"), /image\/webp/);
+  const meta = await sharp(Buffer.from(await served.arrayBuffer())).metadata();
+  assert.equal(meta.width, 96);
+  assert.equal(meta.exif, undefined);
+  assert.equal((await req("/products/1/image", other)).status, 404);
+  assert.equal((await req("/products/1/image", "")).status, 401);
+  const products = await (await req("/products", owner)).json();
+  assert.equal(products.find((p) => p.id === 1).image_version, version);
+  const deleted = await fetch(base + "/api/products/1/image", {
+    method: "DELETE",
+    headers: { Cookie: owner },
+  });
+  assert.equal(deleted.status, 200);
+  assert.equal((await req("/products/1/image", owner)).status, 404);
+});

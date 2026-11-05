@@ -37,3 +37,16 @@ The current initial schema is in `server/db.js` with a migration version table. 
 6. Complete human-reviewed Urdu translations, a full accessibility audit, hardware validation, approved commercial/legal text and credential-backed integration adapters. Validate current official tax requirements before implementing them.
 
 No live pharmacy/patient data should be entered until these production prerequisites are resolved. The implementation is suitable for review and core workflow development.
+
+## Interface enhancement delivery
+
+- Added a reusable startup splash with real initialization, timeout/error recovery and retry; authentication still controls entry to management.
+- Added a collapsible/dismissible floating quick-action shelf to the public and management experiences. Links are role-aware; the shelf hides during form entry, keyboard use and dialogs. Existing desktop checkout remains sticky.
+- Added shared, account/pharmacy-scoped picture preferences for Inventory, POS and Settings, compact picture-free layouts, neutral missing/broken-image placeholders and keyboard-accessible image previews.
+- Added owner/inventory image upload/removal with staff verification, real content decoding, size/dimension restrictions, static WebP re-encoding and metadata removal. A separate migration preserves posted financial records. Changes are audited and image reads remain pharmacy-scoped.
+- Added shared motion/layer tokens, page/dialog/button transitions and reduced-motion overrides; receipt print styles suppress image controls and floating chrome.
+- Replaced shell-specific production startup and hard-coded browser executable paths. Added a Windows `.cmd` launcher that starts in the extracted project folder. Test screenshots use the operating system temporary directory.
+
+No verified medicine photographs were supplied, so neutral placeholders are intentional. Staff attestation confirms the uploaded picture's intended identity; this is not automatic clinical or authenticity verification. Picture preferences remain local to the browser, not synchronized between devices. Full Urdu translation, storefront, prescriptions and offline operation remain outside this upgrade.
+
+Validation for this upgrade: TypeScript/production build passed; all 9 existing business-rule tests and 5 image/migration tests passed; both HTTP integration tests passed; all 6 Chromium browser workflows passed, including picture preference isolation, upload/preview, floating actions, startup recovery, mobile RTL/dark/reduced-motion behavior and receipt print styling. A backup containing images was restored and compared against source image bytes, posted invoices, stock, payments, refunds, balances and audit entries. These executions were on Linux using a system Chromium selected by environment variables. Windows launcher syntax and portable defaults were reviewed; actual Windows execution and physical printer behavior were not tested in this session.
