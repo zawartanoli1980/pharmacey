@@ -493,6 +493,8 @@ if (process.env.NODE_ENV === "production") {
   app.use(vite.middlewares);
 }
 const port = Number(process.env.PORT || 3000);
-app.listen(port, "0.0.0.0", () =>
-  console.log(`SmartMed running on port ${port}`),
-);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`SmartMed running on port ${port}`);
+  console.log(`Open http://localhost:${port}/app in your browser.`);
+  console.log("Keep this server window open while using SmartMed.");
+});

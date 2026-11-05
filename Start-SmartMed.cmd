@@ -18,14 +18,22 @@ if not exist package-lock.json (
   pause
   exit /b 1
 )
-if not exist node_modules (
-  call npm.cmd ci
+node scripts/check-dependencies.mjs
+if errorlevel 1 (
+  echo Installing the locked project dependencies. Please wait.
+  call npm.cmd ci --include=dev
   if errorlevel 1 (
     echo Dependency installation failed. Review the error above.
     pause
     exit /b 1
   )
+  node scripts/check-dependencies.mjs
+  if errorlevel 1 (
+    echo Dependencies are still incomplete. Review the error above.
+    pause
+    exit /b 1
+  )
 )
-echo Open http://localhost:3000/app after the server starts.
+echo Starting SmartMed. Keep this server window open.
 call npm.cmd run dev
 if errorlevel 1 pause

@@ -94,7 +94,7 @@ The gallery uses the existing authenticated catalog and image routes, loads up t
 
 ## Windows PowerShell
 
-Extract the full ZIP. Double-click **Start-SmartMed.cmd** to launch from the correct folder; it installs missing dependencies first. Alternatively open PowerShell in the folder containing `package.json` and `package-lock.json`, then run each command in order:
+Extract the full ZIP. Double-click **Start-SmartMed.cmd** to launch from the correct folder; it checks the installed dependency versions and entry files, then reinstalls the locked dependencies if anything is missing or incomplete. Alternatively open PowerShell in the folder containing `package.json` and `package-lock.json`, then run each command in order:
 
 ```powershell
 npm.cmd ci
@@ -116,3 +116,5 @@ npm.cmd run test:browser
 Windows command syntax has been reviewed, but this session's actual executions took place on Linux; Windows runtime behavior remains to be verified on your PC.
 
 See [HANDOVER.md](HANDOVER.md) for acceptance coverage, limitations and remaining phases.
+
+If Vite reports `lucide-react` or another import cannot be resolved, stop the server with Ctrl+C. From the folder containing `package.json` and `package-lock.json`, run `npm.cmd ci --include=dev` and then `npm.cmd run dev`. The clean installation also refreshes Vite's dependency cache. Do not delete the database to repair a dependency installation. The Windows launcher now runs `scripts/check-dependencies.mjs` before startup, including checking ESM entry files, and repairs incomplete installations through the lockfile. The server prints the actual active port and browser URL after binding.
