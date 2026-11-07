@@ -1,0 +1,408 @@
+.public.has-home-gallery {
+  --gallery-width: 300px;
+  --gallery-gap: 20px;
+  --gallery-top: 153px;
+  --panel: #fff;
+  --bg: #f6f8f8;
+  --text: #203b35;
+  --muted: #6b7d72;
+  --border: #e1eae3;
+  --soft: #edf6ef;
+  --accent-text: #087c62;
+  --gallery-border: #d9e8de;
+  transition: padding-inline-end var(--motion-normal) var(--ease-standard);
+}
+.public-main-content {
+  min-width: 0;
+  width: 100%;
+}
+.public .home-gallery-reopen {
+  order: 3;
+  gap: 7px;
+  color: #087c62;
+  min-width: 29px;
+  min-height: 32px;
+  flex-shrink: 0;
+}
+.home-gallery-reopen > span {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.home-medicine-gallery .gallery-header {
+  padding: 15px 13px 13px;
+}
+.home-medicine-gallery .gallery-eyebrow {
+  font-size: 6px;
+  letter-spacing: 1.3px;
+}
+.home-medicine-gallery .gallery-header h2 {
+  font-size: 15px;
+}
+.public .home-medicine-gallery .gallery-photo-stage {
+  background: #d6eade;
+  height: 224px;
+}
+.home-medicine-gallery .gallery-photo-button {
+  padding: 0;
+}
+.home-medicine-gallery .gallery-artwork {
+  animation: medicine-float 6s ease-in-out infinite;
+  padding: 0;
+}
+.home-medicine-gallery .gallery-artwork img {
+  filter: none;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.home-medicine-gallery .gallery-verification {
+  font-size: 7px;
+  font-weight: 500;
+  inset-inline-start: 7px;
+  inset-block-start: 7px;
+  padding: 4px 6px;
+  border-color: #d3e4d8;
+  color: #3f7154;
+  background: #fffffff0;
+}
+.home-medicine-gallery .gallery-product-details {
+  padding: 16px 14px 14px;
+}
+.home-gallery-category {
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: #659274;
+  display: block;
+  margin-bottom: 8px;
+}
+.home-medicine-gallery .gallery-product-details h3 {
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: -0.6px;
+  color: #204432;
+}
+.home-medicine-gallery .gallery-product-details > p {
+  font-size: 11px;
+  color: #738c7a;
+  line-height: 1.8;
+  margin-top: 8px;
+}
+.home-medicine-gallery .gallery-footer {
+  padding: 0 13px 14px;
+}
+.home-medicine-gallery .gallery-play-status {
+  font-size: 8px;
+  color: #5e7a65;
+}
+.home-gallery-demo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  width: 100%;
+  padding: 11px 12px;
+  background: #edf6ee;
+  color: #27784f;
+  border: 1px solid #dcebdd;
+  border-radius: 7px;
+  margin-top: 13px;
+  transition: background var(--motion-fast);
+}
+.home-gallery-demo:hover {
+  background: #e1f0e5;
+}
+.home-medicine-gallery .gallery-catalog-note {
+  font-size: 8px;
+  margin-top: 9px;
+  color: #718574;
+}
+.home-picture-preview {
+  background: #eff6f0 !important;
+  padding: 0;
+  overflow: hidden;
+}
+.home-picture-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.home-medicine-gallery .image-fallback {
+  color: #50755d;
+}
+@media (min-width: 1280px) {
+  .public.has-home-gallery.home-gallery-expanded {
+    padding-inline-end: calc(var(--gallery-width) + var(--gallery-gap) + 8px);
+  }
+  .public.has-home-gallery.home-gallery-minimized {
+    padding-inline-end: 76px;
+  }
+  .public.has-home-gallery .public-nav {
+    padding-inline: 4%;
+    gap: 14px;
+  }
+  .public.has-home-gallery .public-nav nav {
+    gap: 18px;
+  }
+  .public.has-home-gallery .home-gallery-reopen > span {
+    display: none;
+  }
+  .public.has-home-gallery .hero {
+    gap: 30px;
+    padding-top: 62px;
+    padding-bottom: 60px;
+  }
+  .public.has-home-gallery .hero h1 {
+    font-size: clamp(31px, 3.2vw, 48px);
+  }
+  .public.has-home-gallery .hero-preview {
+    max-width: 430px;
+  }
+  .public.has-home-gallery .hero-buttons {
+    flex-wrap: wrap;
+  }
+  .public.has-home-gallery .hero-checks {
+    flex-wrap: wrap;
+  }
+  .public.has-home-gallery .floating-badge {
+    right: -10px;
+  }
+  .public.has-home-gallery .public-strip {
+    gap: 18px;
+  }
+  .public.has-home-gallery .public-strip strong {
+    font-size: 10px;
+  }
+  .public.has-home-gallery .public-footer > div:last-child {
+    gap: 16px 22px;
+  }
+  .public.has-home-gallery .feature-grid {
+    gap: 18px;
+  }
+  .public.has-home-gallery .feature-grid article {
+    padding: 22px;
+  }
+  .public.has-home-gallery .why {
+    gap: 35px;
+  }
+}
+@media (min-width: 1600px) {
+  .public.has-home-gallery .home-gallery-reopen > span {
+    display: inline;
+  }
+  .public.has-home-gallery .hero {
+    gap: 55px;
+  }
+  .public.has-home-gallery .hero h1 {
+    font-size: 48px;
+  }
+}
+@media (max-width: 1279px) {
+  .public.has-home-gallery {
+    height: var(--public-vh, 100dvh);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding-inline-end: 0;
+  }
+  .public.has-home-gallery .public-nav {
+    position: relative;
+    top: auto;
+    flex-shrink: 0;
+    width: 100%;
+    min-height: 78px;
+    gap: 12px;
+    padding-block: 17px;
+  }
+  .public.has-home-gallery > .floating-region {
+    position: relative;
+    top: auto;
+    flex-shrink: 0;
+    min-height: 53px;
+    padding-block: 7px 5px;
+    margin: 0;
+    width: 100%;
+  }
+  .public.has-home-gallery .public-main-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-top: 20px;
+    scroll-padding-bottom: 25px;
+    scrollbar-width: thin;
+  }
+  .public.has-home-gallery .public-main-content input,
+  .public.has-home-gallery .public-main-content button,
+  .public.has-home-gallery .public-main-content [tabindex],
+  .public.has-home-gallery .public-main-content h1,
+  .public.has-home-gallery .public-main-content h2 {
+    scroll-margin-top: 20px;
+    scroll-margin-bottom: 25px;
+  }
+  .public.has-home-gallery .home-medicine-gallery {
+    flex-shrink: 0;
+    margin: 0 15px calc(9px + env(safe-area-inset-bottom));
+    max-height: min(400px, 44vh);
+  }
+  .public .home-medicine-gallery .gallery-photo-stage {
+    height: 172px;
+    min-height: 100%;
+  }
+  .home-medicine-gallery .gallery-product-details {
+    padding: 14px 12px;
+  }
+  .home-medicine-gallery .gallery-product-details h3 {
+    font-size: 17px;
+  }
+  .home-medicine-gallery .gallery-product-details > p {
+    font-size: 10px;
+    margin-top: 7px;
+    line-height: 1.7;
+  }
+  .home-gallery-category {
+    font-size: 6px;
+    letter-spacing: 1.2px;
+    margin-bottom: 7px;
+  }
+  .home-medicine-gallery .gallery-footer {
+    grid-template-columns: 1fr 1fr;
+    gap: 5px 12px;
+    padding: 0 12px 9px;
+  }
+  .home-medicine-gallery .gallery-catalog-note {
+    grid-column: 1;
+    margin-top: 1px;
+    font-size: 7px;
+  }
+  .home-medicine-gallery .home-gallery-demo {
+    grid-column: 2;
+    grid-row: 2/4;
+    margin: 0;
+    font-size: 9px;
+    min-height: 33px;
+    padding: 8px 10px;
+  }
+  .home-medicine-gallery .gallery-play-status {
+    font-size: 7px;
+  }
+  .home-medicine-gallery .gallery-header {
+    padding: 9px 12px;
+  }
+  .home-medicine-gallery .gallery-header h2 {
+    font-size: 13px;
+  }
+  .home-gallery-reopen > span {
+    display: none;
+  }
+}
+@media (max-width: 650px) {
+  .public.has-home-gallery .public-nav {
+    min-height: 64px;
+    padding: 14px 5%;
+    gap: 8px;
+  }
+  .public.has-home-gallery .public-nav > .brand {
+    font-size: 15px;
+    gap: 4px;
+  }
+  .public.has-home-gallery .public-nav > .brand .brand-icon {
+    height: 28px;
+    width: 28px;
+  }
+  .public.has-home-gallery .public-nav > div {
+    gap: 5px;
+  }
+  .public.has-home-gallery .public-nav .text-button {
+    font-size: 9px;
+  }
+  .public .home-gallery-reopen {
+    min-width: 24px;
+    padding: 3px;
+  }
+  .public.has-home-gallery .public-quick-restore {
+    padding: 3px;
+  }
+  .public.has-home-gallery .home-medicine-gallery {
+    margin-inline: 10px;
+    max-height: min(360px, 43vh);
+  }
+  .public .home-medicine-gallery .gallery-photo-stage {
+    height: 156px;
+  }
+  .home-medicine-gallery .gallery-product-details h3 {
+    font-size: 15px;
+  }
+  .home-medicine-gallery .gallery-product-details > p {
+    font-size: 9px;
+  }
+  .home-medicine-gallery .gallery-verification {
+    font-size: 6px;
+    padding: 3px 4px;
+  }
+  .home-medicine-gallery .gallery-enlarge {
+    font-size: 7px;
+  }
+  .home-medicine-gallery .gallery-content {
+    padding-block: 8px;
+  }
+  .home-medicine-gallery .gallery-footer {
+    gap: 3px 9px;
+  }
+  .home-medicine-gallery .gallery-header {
+    padding-block: 8px;
+  }
+  .home-gallery-category {
+    line-height: 1.6;
+  }
+  .public.has-home-gallery .hero {
+    padding-top: 32px;
+  }
+  .public.has-home-gallery .hero h1 {
+    font-size: 37px;
+  }
+  .home-medicine-gallery .gallery-mini {
+    padding-block: 5px;
+  }
+}
+@media (max-width: 360px) {
+  .public.has-home-gallery .public-nav .brand-pos {
+    display: none;
+  }
+  .public.has-home-gallery .public-nav > .brand {
+    font-size: 14px;
+  }
+  .public .home-medicine-gallery .gallery-photo-stage {
+    height: 140px;
+  }
+  .home-medicine-gallery .gallery-product-details h3 {
+    font-size: 13px;
+  }
+  .home-medicine-gallery .gallery-product-details {
+    padding: 11px 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-medicine-gallery .gallery-artwork,
+  .public.has-home-gallery {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media print {
+  .home-medicine-gallery,
+  .home-gallery-reopen {
+    display: none !important;
+  }
+  .public.has-home-gallery,
+  .public.has-home-gallery .public-main-content {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+}

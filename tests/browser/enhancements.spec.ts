@@ -204,9 +204,9 @@ test("medicine image failures, mobile dark RTL and reduced-motion layouts remain
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("**/api/products/1/image*", (route) => route.abort());
   await login(page);
   await navigation(page, "Point of sale");
-  await page.route("**/api/products/1/image*", (route) => route.abort());
   await page
     .getByPlaceholder("Search medicine, generic, SKU or scan barcode…")
     .fill("Panadol");

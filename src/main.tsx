@@ -67,6 +67,11 @@ import {
 } from "./components/MedicineImages";
 import { StartupSplash, FloatingActions } from "./components/WorkspaceChrome";
 import {
+  HomeMedicineGallery,
+  homeGalleryPreferenceKey,
+  initialHomeGalleryMode,
+} from "./components/HomeMedicineGallery";
+import {
   FloatingMedicineGallery,
   galleryPreferenceKey,
   initialGalleryMode,
@@ -194,6 +199,7 @@ function App() {
   if (mode === "public")
     return (
       <Public
+        viewportHeight={viewportHeight}
         onEnter={enter}
         onDemo={() => {
           enter();
@@ -2643,7 +2649,22 @@ function SettingsPage({ user, dark, setDark, urdu, setUrdu }: any) {
     </>
   );
 }
-function Public({ onEnter, onDemo }: any) {
+function Public({ onEnter, onDemo, viewportHeight }: any) {
+  const [homeGalleryMode, setHomeGalleryMode] = useState<GalleryMode>(
+    initialHomeGalleryMode,
+  );
+  const [homeGalleryFocus, setHomeGalleryFocus] = useState(0);
+  const homeGalleryButton = useRef<HTMLButtonElement>(null);
+  const changeHomeGalleryMode = (value: GalleryMode) => {
+    setHomeGalleryMode(value);
+    try {
+      localStorage.setItem(homeGalleryPreferenceKey, value);
+    } catch {
+      /* Storage is optional. */
+    }
+    if (value === "closed")
+      homeGalleryButton.current?.focus({ preventScroll: true });
+  };
   const [dockDismissed, setDockDismissed] = useState(false);
   const [dockRevision, setDockRevision] = useState(0);
   const [page, setPage] = useState("Home");
@@ -2651,6 +2672,13 @@ function Public({ onEnter, onDemo }: any) {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [faq, setFaq] = useState(-1);
+  const goPublic = (next: string) => {
+    setPage(next);
+    requestAnimationFrame(() => {
+      document.querySelector(".public-main-content")?.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0 });
+    });
+  };
   const features = [
     [
       "Fast, accurate billing",
@@ -2684,8 +2712,26 @@ function Public({ onEnter, onDemo }: any) {
     ],
   ];
   return (
-    <div className="public">
+    <div
+      className={`public ${page === "Home" ? `has-home-gallery home-gallery-${homeGalleryMode}` : ""}`}
+      style={{ "--public-vh": `${viewportHeight}px` } as React.CSSProperties}
+    >
       <header className="public-nav">
+        {page === "Home" && (
+          <button
+            ref={homeGalleryButton}
+            className="icon-button home-gallery-reopen"
+            aria-label="Show home medicine gallery"
+            title="Show medicine pictures"
+            onClick={() => {
+              changeHomeGalleryMode("expanded");
+              setHomeGalleryFocus((v) => v + 1);
+            }}
+          >
+            <ImagePlus size={20} />
+            <span>Medicine pictures</span>
+          </button>
+        )}
         <button
           className="icon-button public-quick-restore"
           aria-label="Show quick actions"
@@ -2702,7 +2748,7 @@ function Public({ onEnter, onDemo }: any) {
           href="/"
           onClick={(e) => {
             e.preventDefault();
-            setPage("Home");
+            goPublic("Home");
           }}
         >
           <span className="brand-icon">
@@ -2715,7 +2761,7 @@ function Public({ onEnter, onDemo }: any) {
             <button
               className={page === s ? "selected" : ""}
               key={s}
-              onClick={() => setPage(s)}
+              onClick={() => goPublic(s)}
             >
               {s}
             </button>
@@ -2758,455 +2804,467 @@ function Public({ onEnter, onDemo }: any) {
             label: "Help & support",
             icon: HelpCircle,
             run: () => {
-              setPage("Support");
+              goPublic("Support");
               window.scrollTo({ top: 0 });
             },
           },
         ]}
       />
 
-      {page === "Home" ? (
-        <>
-          <section className="hero">
-            <div className="hero-text">
-              <span className="hero-label">
-                <i />
-                PURPOSE-BUILT FOR PAKISTANI PHARMACIES
-              </span>
-              <h1>
-                Complete pharmacy
-                <br />
-                management.
-                <br />
-                <em>Beautifully simplified.</em>
-              </h1>
-              <p className="hero-accessible">
-                SmartMed POS — Complete Pharmacy Management, Simplified.
-              </p>
-              <p>
-                Fast billing. Accurate stock. Fewer expiry surprises.
-                <br />
-                Bring your pharmacy together in one clear workspace,
-                <br />
-                and make more room for the care that matters.
-              </p>
-              <div className="hero-buttons">
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setForm("Start 1-Month Trial");
-                    setStatus("");
-                  }}
-                >
-                  Start 1-Month Trial <ArrowRight size={17} />
-                </button>
-                <button className="secondary" onClick={onDemo}>
-                  Explore interactive demo <ArrowUpRight size={16} />
-                </button>
-              </div>
-              <div className="hero-checks">
-                <span>
-                  <Check size={15} />
-                  Batch-level control
+      <div className="public-main-content">
+        {page === "Home" ? (
+          <>
+            <section className="hero">
+              <div className="hero-text">
+                <span className="hero-label">
+                  <i />
+                  PURPOSE-BUILT FOR PAKISTANI PHARMACIES
                 </span>
-                <span>
-                  <Check size={15} />
-                  Clear financial records
-                </span>
-                <span>
-                  <Check size={15} />
-                  Built for PKR
-                </span>
-              </div>
-            </div>
-            <div className="hero-preview">
-              <div className="preview-top">
-                <span>
-                  <Activity size={17} /> SmartMed POS
-                </span>
-                <span className="badge">DEMO PREVIEW</span>
-              </div>
-              <div className="preview-content">
-                <small>YOUR PHARMACY AT A GLANCE</small>
-                <h2>
-                  A clearer view.
-                  <br />A healthier business.
-                </h2>
-                <div className="preview-cards">
-                  <div>
-                    <Wallet size={17} />
-                    <small>Net sales</small>
-                    <strong>PKR 0</strong>
-                    <span>Ready for your first sale</span>
-                  </div>
-                  <div>
-                    <Boxes size={17} />
-                    <small>Inventory</small>
-                    <strong>8 medicines</strong>
-                    <span>Synthetic demo catalog</span>
-                  </div>
+                <h1>
+                  Complete pharmacy
+                  <br />
+                  management.
+                  <br />
+                  <em>Beautifully simplified.</em>
+                </h1>
+                <p className="hero-accessible">
+                  SmartMed POS — Complete Pharmacy Management, Simplified.
+                </p>
+                <p>
+                  Fast billing. Accurate stock. Fewer expiry surprises.
+                  <br />
+                  Bring your pharmacy together in one clear workspace,
+                  <br />
+                  and make more room for the care that matters.
+                </p>
+                <div className="hero-buttons">
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setForm("Start 1-Month Trial");
+                      setStatus("");
+                    }}
+                  >
+                    Start 1-Month Trial <ArrowRight size={17} />
+                  </button>
+                  <button className="secondary" onClick={onDemo}>
+                    Explore interactive demo <ArrowUpRight size={16} />
+                  </button>
                 </div>
-                <div className="preview-stock">
-                  <div>
-                    <strong>Every batch. Under control.</strong>
-                    <ShieldCheck size={18} />
-                  </div>
-                  {[
-                    ["Panadol", "500 mg", "1,240 units"],
-                    ["Augmentin", "625 mg", "276 units"],
-                    ["Glucophage", "500 mg", "640 units"],
-                  ].map((p) => (
-                    <div key={p[0]}>
-                      <span className="product-icon">
-                        <Pill size={16} />
-                      </span>
-                      <span>
-                        <strong>{p[0]}</strong>
-                        <small>{p[1]}</small>
-                      </span>
-                      <span>{p[2]}</span>
+                <div className="hero-checks">
+                  <span>
+                    <Check size={15} />
+                    Batch-level control
+                  </span>
+                  <span>
+                    <Check size={15} />
+                    Clear financial records
+                  </span>
+                  <span>
+                    <Check size={15} />
+                    Built for PKR
+                  </span>
+                </div>
+              </div>
+              <div className="hero-preview">
+                <div className="preview-top">
+                  <span>
+                    <Activity size={17} /> SmartMed POS
+                  </span>
+                  <span className="badge">DEMO PREVIEW</span>
+                </div>
+                <div className="preview-content">
+                  <small>YOUR PHARMACY AT A GLANCE</small>
+                  <h2>
+                    A clearer view.
+                    <br />A healthier business.
+                  </h2>
+                  <div className="preview-cards">
+                    <div>
+                      <Wallet size={17} />
+                      <small>Net sales</small>
+                      <strong>PKR 0</strong>
+                      <span>Ready for your first sale</span>
                     </div>
-                  ))}
+                    <div>
+                      <Boxes size={17} />
+                      <small>Inventory</small>
+                      <strong>8 medicines</strong>
+                      <span>Synthetic demo catalog</span>
+                    </div>
+                  </div>
+                  <div className="preview-stock">
+                    <div>
+                      <strong>Every batch. Under control.</strong>
+                      <ShieldCheck size={18} />
+                    </div>
+                    {[
+                      ["Panadol", "500 mg", "1,240 units"],
+                      ["Augmentin", "625 mg", "276 units"],
+                      ["Glucophage", "500 mg", "640 units"],
+                    ].map((p) => (
+                      <div key={p[0]}>
+                        <span className="product-icon">
+                          <Pill size={16} />
+                        </span>
+                        <span>
+                          <strong>{p[0]}</strong>
+                          <small>{p[1]}</small>
+                        </span>
+                        <span>{p[2]}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="primary full" onClick={onDemo}>
+                    Take a look inside <ArrowRight size={16} />
+                  </button>
                 </div>
-                <button className="primary full" onClick={onDemo}>
-                  Take a look inside <ArrowRight size={16} />
+                <div className="floating-badge">
+                  <ShieldCheck size={23} />
+                  <span>
+                    <strong>Expiry-aware. Always.</strong>
+                    <small>Restricted stock stays off the bill.</small>
+                  </span>
+                </div>
+              </div>
+            </section>
+            <section className="public-strip">
+              <span>ONE CONNECTED WORKSPACE</span>
+              <strong>From your first delivery to your last receipt.</strong>
+              <span>
+                <Package size={19} />
+                Inventory
+              </span>
+              <span>
+                <ShoppingCart size={19} />
+                Point of sale
+              </span>
+              <span>
+                <BarChart3 size={19} />
+                Reports
+              </span>
+            </section>
+            <section className="public-section">
+              <span className="eyebrow">LESS FRICTION. MORE CLARITY.</span>
+              <h2>A better day behind the counter.</h2>
+              <p>
+                Replace billing errors, inventory confusion and unclear profit
+                with connected records.
+              </p>
+              <div className="feature-grid">
+                {features.map(([title, text, Icon]: any) => (
+                  <article key={title}>
+                    <span className="stat-icon mint">
+                      <Icon size={22} />
+                    </span>
+                    <h3>{title}</h3>
+                    <p>{text}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+            <section className="public-section steps">
+              <span className="eyebrow">A THOUGHTFUL START</span>
+              <h2>Four steps to your next chapter.</h2>
+              <div>
+                {[
+                  "Create your pharmacy",
+                  "Import & verify stock",
+                  "Set up your team",
+                  "Start billing",
+                ].map((s, i) => (
+                  <article key={s}>
+                    <span>0{i + 1}</span>
+                    <h3>{s}</h3>
+                    <p>
+                      {
+                        [
+                          "Plan your branches, workflow and deployment.",
+                          "Verify medicine identities, batches and conversions.",
+                          "Assign the right access to the right people.",
+                          "Receive stock, record sales and see the difference.",
+                        ][i]
+                      }
+                    </p>
+                  </article>
+                ))}
+              </div>
+              <p>
+                CSV import and pharmacy provisioning are upcoming phases. The
+                current demo starts with a synthetic catalog.
+              </p>
+            </section>
+            <section className="public-section why">
+              <div>
+                <span className="eyebrow">WHY CHOOSE SMARTMED POS?</span>
+                <h2>
+                  Because good care starts
+                  <br />
+                  with a well-run pharmacy.
+                </h2>
+              </div>
+              <div>
+                <p>
+                  One stock ledger. Batch-aware billing. Historical cost
+                  records. Clear permissions. SmartMed brings the essentials
+                  into a workspace designed for the way Pakistani pharmacies
+                  work.
+                </p>
+                <button className="primary" onClick={onDemo}>
+                  Explore the working demo <ArrowRight size={16} />
                 </button>
               </div>
-              <div className="floating-badge">
-                <ShieldCheck size={23} />
-                <span>
-                  <strong>Expiry-aware. Always.</strong>
-                  <small>Restricted stock stays off the bill.</small>
-                </span>
-              </div>
-            </div>
-          </section>
-          <section className="public-strip">
-            <span>ONE CONNECTED WORKSPACE</span>
-            <strong>From your first delivery to your last receipt.</strong>
-            <span>
-              <Package size={19} />
-              Inventory
-            </span>
-            <span>
-              <ShoppingCart size={19} />
-              Point of sale
-            </span>
-            <span>
-              <BarChart3 size={19} />
-              Reports
-            </span>
-          </section>
+            </section>
+          </>
+        ) : page === "Features" ? (
           <section className="public-section">
-            <span className="eyebrow">LESS FRICTION. MORE CLARITY.</span>
-            <h2>A better day behind the counter.</h2>
-            <p>
-              Replace billing errors, inventory confusion and unclear profit
-              with connected records.
-            </p>
+            <span className="eyebrow">BUILT FOR THE COUNTER</span>
+            <h1>Everything starts with the essentials.</h1>
             <div className="feature-grid">
               {features.map(([title, text, Icon]: any) => (
                 <article key={title}>
-                  <span className="stat-icon mint">
-                    <Icon size={22} />
-                  </span>
+                  <Icon size={24} />
                   <h3>{title}</h3>
                   <p>{text}</p>
                 </article>
               ))}
             </div>
+            <h2>Hardware, training & migration</h2>
+            <p>
+              Keyboard-emulating USB barcode scanners can enter codes into
+              search. Browser print layouts support 58 mm and 80 mm formats;
+              physical printer compatibility needs testing with your model.
+            </p>
+            <p>
+              Training, stock migration, hosting and support scope must be
+              agreed in writing before onboarding. Online storefronts, secure
+              prescriptions, transfers and offline allocations are planned
+              phases.
+            </p>
           </section>
-          <section className="public-section steps">
-            <span className="eyebrow">A THOUGHTFUL START</span>
-            <h2>Four steps to your next chapter.</h2>
-            <div>
+        ) : page === "Pricing" ? (
+          <section className="public-section">
+            <span className="eyebrow">OWNER-PROVIDED DRAFT PRICING</span>
+            <h1>Choose your next step.</h1>
+            <p>
+              Indicative software prices only. Medicine prices belong to each
+              pharmacy.
+            </p>
+            <div className="pricing-grid">
               {[
-                "Create your pharmacy",
-                "Import & verify stock",
-                "Set up your team",
-                "Start billing",
-              ].map((s, i) => (
-                <article key={s}>
-                  <span>0{i + 1}</span>
+                [
+                  "One-time license",
+                  "45,000",
+                  "A license option for your pharmacy.",
+                ],
+                [
+                  "Monthly subscription",
+                  "5,000",
+                  "A monthly software subscription.",
+                ],
+                [
+                  "Custom package",
+                  "Let’s talk",
+                  "A quotation based on your requirements.",
+                ],
+              ].map(([s, n, t]) => (
+                <article className="panel" key={s}>
                   <h3>{s}</h3>
-                  <p>
-                    {
-                      [
-                        "Plan your branches, workflow and deployment.",
-                        "Verify medicine identities, batches and conversions.",
-                        "Assign the right access to the right people.",
-                        "Receive stock, record sales and see the difference.",
-                      ][i]
-                    }
-                  </p>
+                  <h2>{n === "Let’s talk" ? n : "PKR " + n}</h2>
+                  <p>{t}</p>
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setForm("Pricing enquiry · " + s);
+                      setStatus("");
+                    }}
+                  >
+                    Request details <ArrowRight size={16} />
+                  </button>
                 </article>
               ))}
             </div>
-            <p>
-              CSV import and pharmacy provisioning are upcoming phases. The
-              current demo starts with a synthetic catalog.
-            </p>
-          </section>
-          <section className="public-section why">
-            <div>
-              <span className="eyebrow">WHY CHOOSE SMARTMED POS?</span>
-              <h2>
-                Because good care starts
-                <br />
-                with a well-run pharmacy.
-              </h2>
+            <div className="info-banner">
+              <HelpCircle size={22} />
+              <span>
+                Deployment type, branch and user limits, hosting, backups,
+                updates, support and separate service charges are not yet
+                specified. Confirm a written quotation before purchase. A
+                one-month trial is subject to agreed conditions.
+              </span>
             </div>
-            <div>
-              <p>
-                One stock ledger. Batch-aware billing. Historical cost records.
-                Clear permissions. SmartMed brings the essentials into a
-                workspace designed for the way Pakistani pharmacies work.
-              </p>
-              <button className="primary" onClick={onDemo}>
-                Explore the working demo <ArrowRight size={16} />
-              </button>
-            </div>
+            <button
+              className="text-button"
+              onClick={() => goPublic("Trial conditions")}
+            >
+              Read trial conditions <ArrowRight size={16} />
+            </button>
           </section>
-        </>
-      ) : page === "Features" ? (
-        <section className="public-section">
-          <span className="eyebrow">BUILT FOR THE COUNTER</span>
-          <h1>Everything starts with the essentials.</h1>
-          <div className="feature-grid">
-            {features.map(([title, text, Icon]: any) => (
-              <article key={title}>
-                <Icon size={24} />
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
-          <h2>Hardware, training & migration</h2>
-          <p>
-            Keyboard-emulating USB barcode scanners can enter codes into search.
-            Browser print layouts support 58 mm and 80 mm formats; physical
-            printer compatibility needs testing with your model.
-          </p>
-          <p>
-            Training, stock migration, hosting and support scope must be agreed
-            in writing before onboarding. Online storefronts, secure
-            prescriptions, transfers and offline allocations are planned phases.
-          </p>
-        </section>
-      ) : page === "Pricing" ? (
-        <section className="public-section">
-          <span className="eyebrow">OWNER-PROVIDED DRAFT PRICING</span>
-          <h1>Choose your next step.</h1>
-          <p>
-            Indicative software prices only. Medicine prices belong to each
-            pharmacy.
-          </p>
-          <div className="pricing-grid">
+        ) : page === "Support" ? (
+          <section className="public-section narrow">
+            <span className="eyebrow">HERE TO HELP YOU GET STARTED</span>
+            <h1>Support & frequently asked questions</h1>
             {[
               [
-                "One-time license",
-                "45,000",
-                "A license option for your pharmacy.",
+                "Does this demo process payments?",
+                "No. Cash, card, bank, JazzCash and Easypaisa are accounting records only. Live gateway integrations need credentials and end-to-end validation.",
               ],
               [
-                "Monthly subscription",
-                "5,000",
-                "A monthly software subscription.",
+                "Can I use it offline?",
+                "Offline billing is not implemented. Sales require a server connection. A cached screen does not provide safe offline stock allocation.",
               ],
               [
-                "Custom package",
-                "Let’s talk",
-                "A quotation based on your requirements.",
+                "Is prescription approval available?",
+                "Prescription medicine counter sales require an owner or pharmacist role. Uploaded prescription queues and online fulfillment are not implemented.",
               ],
-            ].map(([s, n, t]) => (
-              <article className="panel" key={s}>
-                <h3>{s}</h3>
-                <h2>{n === "Let’s talk" ? n : "PKR " + n}</h2>
-                <p>{t}</p>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setForm("Pricing enquiry · " + s);
-                    setStatus("");
-                  }}
-                >
-                  Request details <ArrowRight size={16} />
+              [
+                "How do I get training or migrate stock?",
+                "Submit a request so scope and data requirements can be agreed. No delivery timeframe or included support package has been specified.",
+              ],
+            ].map(([q, a], i) => (
+              <div className="faq" key={q}>
+                <button onClick={() => setFaq(faq === i ? -1 : i)}>
+                  {q}
+                  <Plus size={17} />
                 </button>
-              </article>
+                {faq === i && <p>{a}</p>}
+              </div>
             ))}
-          </div>
-          <div className="info-banner">
-            <HelpCircle size={22} />
-            <span>
-              Deployment type, branch and user limits, hosting, backups,
-              updates, support and separate service charges are not yet
-              specified. Confirm a written quotation before purchase. A
-              one-month trial is subject to agreed conditions.
-            </span>
-          </div>
-          <button
-            className="text-button"
-            onClick={() => setPage("Trial conditions")}
-          >
-            Read trial conditions <ArrowRight size={16} />
-          </button>
-        </section>
-      ) : page === "Support" ? (
-        <section className="public-section narrow">
-          <span className="eyebrow">HERE TO HELP YOU GET STARTED</span>
-          <h1>Support & frequently asked questions</h1>
-          {[
-            [
-              "Does this demo process payments?",
-              "No. Cash, card, bank, JazzCash and Easypaisa are accounting records only. Live gateway integrations need credentials and end-to-end validation.",
-            ],
-            [
-              "Can I use it offline?",
-              "Offline billing is not implemented. Sales require a server connection. A cached screen does not provide safe offline stock allocation.",
-            ],
-            [
-              "Is prescription approval available?",
-              "Prescription medicine counter sales require an owner or pharmacist role. Uploaded prescription queues and online fulfillment are not implemented.",
-            ],
-            [
-              "How do I get training or migrate stock?",
-              "Submit a request so scope and data requirements can be agreed. No delivery timeframe or included support package has been specified.",
-            ],
-          ].map(([q, a], i) => (
-            <div className="faq" key={q}>
-              <button onClick={() => setFaq(faq === i ? -1 : i)}>
-                {q}
-                <Plus size={17} />
-              </button>
-              {faq === i && <p>{a}</p>}
-            </div>
-          ))}
-          <button
-            className="primary"
-            onClick={() => {
-              setForm("Support request");
-              setStatus("");
-            }}
-          >
-            Send a support request
-          </button>
-        </section>
-      ) : page === "About" ? (
-        <section className="public-section narrow">
-          <span className="eyebrow">CARE, CONNECTED</span>
-          <h1>A clearer way to run your pharmacy.</h1>
-          <p>
-            SmartMed POS is being built for Pakistani pharmacy owners and their
-            teams. Our focus is practical: accurate stock, fast billing, expiry
-            control and financial records that make sense.
-          </p>
-          <p>
-            This application is an early working demo with synthetic data. No
-            customer endorsements, certifications or regulatory approvals are
-            claimed.
-          </p>
-          <button
-            className="primary"
-            onClick={() => {
-              setForm("Contact");
-              setStatus("");
-            }}
-          >
-            Contact the team <ArrowRight size={16} />
-          </button>
-        </section>
-      ) : (
-        <section className="public-section narrow">
-          <h1>{page}</h1>
-          {page === "Privacy" ? (
-            <>
-              <p>
-                Demo form submissions store the name, phone and message you
-                provide in this environment. Do not submit patient details or
-                prescriptions. Demo accounts are shared; never enter real
-                pharmacy records.
-              </p>
-              <p>
-                A production privacy policy, data controller contact, retention
-                schedule and rights request process must be approved before
-                collecting personal or health information.
-              </p>
-            </>
-          ) : page === "Trial conditions" ? (
-            <p>
-              The proposed trial lasts one month. Eligibility, start date,
-              deployment, support, data export, retention, any charges and
-              cancellation arrangements require written confirmation. A request
-              does not activate a subscription or charge you.
-            </p>
-          ) : (
-            <p>
-              This synthetic demo is for evaluation. Production service terms,
-              licensing, support commitments, liability, applicable law and
-              commercial conditions require owner review before a sale or live
-              deployment.
-            </p>
-          )}
-        </section>
-      )}
-      <section className="public-cta">
-        <div>
-          <h2>Make more room for better care.</h2>
-          <p>See what a connected pharmacy could look like.</p>
-        </div>
-        <button
-          className="primary"
-          onClick={() => {
-            setForm("Book a Demo");
-            setStatus("");
-          }}
-        >
-          Book a Demo <ArrowRight size={17} />
-        </button>
-      </section>
-      <footer className="public-footer">
-        <div>
-          <a className="brand" href="/">
-            <span className="brand-icon">
-              <Activity size={20} />
-            </span>
-            SmartMed POS
-          </a>
-          <p>Pharmacy, in sync.</p>
-          <small>
-            © {new Date().getFullYear()} SmartMed POS · Development demo
-          </small>
-        </div>
-        <div>
-          {[
-            "Features",
-            "Pricing",
-            "About",
-            "Support",
-            "Privacy",
-            "Terms",
-            "Trial conditions",
-          ].map((s) => (
             <button
-              key={s}
+              className="primary"
               onClick={() => {
-                setPage(s);
-                window.scrollTo(0, 0);
+                setForm("Support request");
+                setStatus("");
               }}
             >
-              {s}
+              Send a support request
             </button>
-          ))}
+          </section>
+        ) : page === "About" ? (
+          <section className="public-section narrow">
+            <span className="eyebrow">CARE, CONNECTED</span>
+            <h1>A clearer way to run your pharmacy.</h1>
+            <p>
+              SmartMed POS is being built for Pakistani pharmacy owners and
+              their teams. Our focus is practical: accurate stock, fast billing,
+              expiry control and financial records that make sense.
+            </p>
+            <p>
+              This application is an early working demo with synthetic data. No
+              customer endorsements, certifications or regulatory approvals are
+              claimed.
+            </p>
+            <button
+              className="primary"
+              onClick={() => {
+                setForm("Contact");
+                setStatus("");
+              }}
+            >
+              Contact the team <ArrowRight size={16} />
+            </button>
+          </section>
+        ) : (
+          <section className="public-section narrow">
+            <h1>{page}</h1>
+            {page === "Privacy" ? (
+              <>
+                <p>
+                  Demo form submissions store the name, phone and message you
+                  provide in this environment. Do not submit patient details or
+                  prescriptions. Demo accounts are shared; never enter real
+                  pharmacy records.
+                </p>
+                <p>
+                  A production privacy policy, data controller contact,
+                  retention schedule and rights request process must be approved
+                  before collecting personal or health information.
+                </p>
+              </>
+            ) : page === "Trial conditions" ? (
+              <p>
+                The proposed trial lasts one month. Eligibility, start date,
+                deployment, support, data export, retention, any charges and
+                cancellation arrangements require written confirmation. A
+                request does not activate a subscription or charge you.
+              </p>
+            ) : (
+              <p>
+                This synthetic demo is for evaluation. Production service terms,
+                licensing, support commitments, liability, applicable law and
+                commercial conditions require owner review before a sale or live
+                deployment.
+              </p>
+            )}
+          </section>
+        )}
+        <section className="public-cta">
+          <div>
+            <h2>Make more room for better care.</h2>
+            <p>See what a connected pharmacy could look like.</p>
+          </div>
           <button
+            className="primary"
             onClick={() => {
-              setForm("Contact");
+              setForm("Book a Demo");
               setStatus("");
             }}
           >
-            Contact
+            Book a Demo <ArrowRight size={17} />
           </button>
-        </div>
-      </footer>
+        </section>
+        <footer className="public-footer">
+          <div>
+            <a className="brand" href="/">
+              <span className="brand-icon">
+                <Activity size={20} />
+              </span>
+              SmartMed POS
+            </a>
+            <p>Pharmacy, in sync.</p>
+            <small>
+              © {new Date().getFullYear()} SmartMed POS · Development demo
+            </small>
+          </div>
+          <div>
+            {[
+              "Features",
+              "Pricing",
+              "About",
+              "Support",
+              "Privacy",
+              "Terms",
+              "Trial conditions",
+            ].map((s) => (
+              <button
+                key={s}
+                onClick={() => {
+                  goPublic(s);
+                  window.scrollTo(0, 0);
+                }}
+              >
+                {s}
+              </button>
+            ))}
+            <button
+              onClick={() => {
+                setForm("Contact");
+                setStatus("");
+              }}
+            >
+              Contact
+            </button>
+          </div>
+        </footer>
+      </div>
+      {page === "Home" && (
+        <HomeMedicineGallery
+          mode={homeGalleryMode}
+          onModeChange={changeHomeGalleryMode}
+          focusRequest={homeGalleryFocus}
+          onExplore={onDemo}
+        />
+      )}
       {form && (
         <Modal
           title={form}

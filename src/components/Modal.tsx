@@ -4,16 +4,19 @@ export default function Modal({
   title,
   close,
   children,
+  returnFocusTo,
 }: {
   title: string;
   close: () => void;
   children: React.ReactNode;
+  returnFocusTo?: HTMLElement | null;
 }) {
   const dialog = useRef<HTMLElement>(null);
   const onClose = useRef(close);
   onClose.current = close;
   useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
+    const previous =
+      returnFocusTo || (document.activeElement as HTMLElement | null);
     const root = dialog.current;
     const selectors =
       'button:not(:disabled),a[href],input:not([tabindex="-1"]),select,textarea,[tabindex="0"]';
@@ -69,12 +72,11 @@ export default function Modal({
       // Restore focus after it becomes interactive instead of losing keyboard position.
       const restoreFocus = (attempt = 0) => {
         if (!previous?.isConnected) return;
-        if (previous.closest("[inert]")) {
-          if (attempt < 3)
-            requestAnimationFrame(() => restoreFocus(attempt + 1));
-          return;
-        }
-        previous.focus({ preventScroll: true });
+        if (!previous.closest("[inert]"))
+          previous.focus({ preventScroll: true });
+        // The panel's dialog observer can still be removing visibility:hidden.
+        if (document.activeElement !== previous && attempt < 3)
+          requestAnimationFrame(() => restoreFocus(attempt + 1));
       };
       restoreFocus();
     };

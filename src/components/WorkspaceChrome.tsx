@@ -77,8 +77,9 @@ export function FloatingActions({
     const scroll = () =>
       setScrolled(
         window.scrollY > 500 ||
-          (document.querySelector(".workspace-content>main")?.scrollTop || 0) >
-            500,
+          (document.querySelector(
+            ".workspace-content>main, .public-main-content",
+          )?.scrollTop || 0) > 500,
       );
     scroll();
     document.addEventListener("scroll", scroll, {
@@ -159,7 +160,9 @@ export function FloatingActions({
                 title="Back to top"
                 onClick={() => {
                   document
-                    .querySelector(".workspace-content>main")
+                    .querySelector(
+                      ".workspace-content>main, .public-main-content",
+                    )
                     ?.scrollTo({
                       top: 0,
                       behavior: window.matchMedia(
