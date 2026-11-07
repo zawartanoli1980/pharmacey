@@ -271,7 +271,7 @@ export function HomeMedicineGallery({
                   }}
                 >
                   <span className="gallery-verification home-image-label">
-                    AI-generated illustration
+                    {picture.label}
                   </span>
                   <button
                     className="gallery-photo-button"
@@ -365,7 +365,7 @@ export function HomeMedicineGallery({
                 <ChevronRight size={15} aria-hidden="true" />
               </button>
               <p className="gallery-catalog-note">
-                Illustrative imagery. No live stock or medicine prices.
+                Website imagery. No live stock or medicine prices.
               </p>
             </footer>
           </>
@@ -373,17 +373,14 @@ export function HomeMedicineGallery({
       </aside>
       {preview && (
         <Modal
-          title={`${preview.name} · illustrative picture`}
+          title={`${preview.name} · picture preview`}
           close={() => setPreview(null)}
           returnFocusTo={previewTrigger.current}
         >
           <div className="image-preview home-picture-preview">
             <HomePhoto picture={preview} eager />
           </div>
-          <p>
-            AI-generated, unbranded illustration for the SmartMed POS website.
-            This is not a product listing or a medicine recommendation.
-          </p>
+          <p>{preview.note}</p>
         </Modal>
       )}
     </>

@@ -100,6 +100,24 @@ Visitors can enlarge pictures, browse with previous/next buttons, keyboard arrow
 
 The wide desktop layout reserves a side rail. On narrow screens a dedicated bottom area leaves the public page content scrollable above it, so trial/demo buttons and forms remain usable. The public gallery uses only the static assets and `src/data/homeMedicineGallery.ts`; it never calls authenticated catalog or image endpoints. The original private dashboard/POS gallery and its verified uploads are preserved. Open `/` for the public gallery, and `/app` for the separate management application.
 
+### Selected background and three floating images — assets pending
+
+The prepared `HomeSelectedPhotography` layout supports the user's selected
+capsule background and three individually floating healthcare image cards.
+The exact Pinterest images are **not included yet** because cloud network
+access to Pinterest is blocked. Their latest source links are recorded in
+`src/assets/home-selected/README.md`.
+
+To activate this layout after obtaining the exact images, place them in
+`src/assets/home-selected/` with the basenames `background`, `photo-one`,
+`photo-two` and `photo-three`, keeping their original `.jpg`, `.jpeg`, `.png`
+or `.webp` extension. Preserve any watermark. Restart the development server,
+or run `npm run build` before production startup. All four assets must be
+present; until then the current illustrated Home page remains available.
+The prepared layout includes enlarged previews, focus return, reduced motion,
+RTL and print exclusion. The public gallery also switches to the three selected
+images once available, without exposing private inventory or claiming prices.
+
 ## Windows PowerShell
 
 Extract the full ZIP. Double-click **Start-SmartMed.cmd** to launch from the correct folder; it checks the installed dependency versions and entry files, then reinstalls the locked dependencies if anything is missing or incomplete. Alternatively open PowerShell in the folder containing `package.json` and `package-lock.json`, then run each command in order:

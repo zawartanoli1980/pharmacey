@@ -72,6 +72,11 @@ import {
   initialHomeGalleryMode,
 } from "./components/HomeMedicineGallery";
 import {
+  HomeSelectedBackground,
+  HomeSelectedPhotoCards,
+} from "./components/HomeSelectedPhotography";
+import { selectedHomePhotography } from "./data/homeSelectedPhotography";
+import {
   FloatingMedicineGallery,
   galleryPreferenceKey,
   initialGalleryMode,
@@ -2713,9 +2718,12 @@ function Public({ onEnter, onDemo, viewportHeight }: any) {
   ];
   return (
     <div
-      className={`public ${page === "Home" ? `has-home-gallery home-gallery-${homeGalleryMode}` : ""}`}
+      className={`public ${page === "Home" ? `has-home-gallery home-gallery-${homeGalleryMode} ${selectedHomePhotography ? "has-selected-home-photos" : ""}` : ""}`}
       style={{ "--public-vh": `${viewportHeight}px` } as React.CSSProperties}
     >
+      {page === "Home" && selectedHomePhotography && (
+        <HomeSelectedBackground image={selectedHomePhotography.background} />
+      )}
       <header className="public-nav">
         {page === "Home" && (
           <button
@@ -2866,67 +2874,73 @@ function Public({ onEnter, onDemo, viewportHeight }: any) {
                   </span>
                 </div>
               </div>
-              <div className="hero-preview">
-                <div className="preview-top">
-                  <span>
-                    <Activity size={17} /> SmartMed POS
-                  </span>
-                  <span className="badge">DEMO PREVIEW</span>
-                </div>
-                <div className="preview-content">
-                  <small>YOUR PHARMACY AT A GLANCE</small>
-                  <h2>
-                    A clearer view.
-                    <br />A healthier business.
-                  </h2>
-                  <div className="preview-cards">
-                    <div>
-                      <Wallet size={17} />
-                      <small>Net sales</small>
-                      <strong>PKR 0</strong>
-                      <span>Ready for your first sale</span>
-                    </div>
-                    <div>
-                      <Boxes size={17} />
-                      <small>Inventory</small>
-                      <strong>8 medicines</strong>
-                      <span>Synthetic demo catalog</span>
-                    </div>
+              {selectedHomePhotography ? (
+                <HomeSelectedPhotoCards
+                  photos={selectedHomePhotography.photos}
+                />
+              ) : (
+                <div className="hero-preview">
+                  <div className="preview-top">
+                    <span>
+                      <Activity size={17} /> SmartMed POS
+                    </span>
+                    <span className="badge">DEMO PREVIEW</span>
                   </div>
-                  <div className="preview-stock">
-                    <div>
-                      <strong>Every batch. Under control.</strong>
-                      <ShieldCheck size={18} />
-                    </div>
-                    {[
-                      ["Panadol", "500 mg", "1,240 units"],
-                      ["Augmentin", "625 mg", "276 units"],
-                      ["Glucophage", "500 mg", "640 units"],
-                    ].map((p) => (
-                      <div key={p[0]}>
-                        <span className="product-icon">
-                          <Pill size={16} />
-                        </span>
-                        <span>
-                          <strong>{p[0]}</strong>
-                          <small>{p[1]}</small>
-                        </span>
-                        <span>{p[2]}</span>
+                  <div className="preview-content">
+                    <small>YOUR PHARMACY AT A GLANCE</small>
+                    <h2>
+                      A clearer view.
+                      <br />A healthier business.
+                    </h2>
+                    <div className="preview-cards">
+                      <div>
+                        <Wallet size={17} />
+                        <small>Net sales</small>
+                        <strong>PKR 0</strong>
+                        <span>Ready for your first sale</span>
                       </div>
-                    ))}
+                      <div>
+                        <Boxes size={17} />
+                        <small>Inventory</small>
+                        <strong>8 medicines</strong>
+                        <span>Synthetic demo catalog</span>
+                      </div>
+                    </div>
+                    <div className="preview-stock">
+                      <div>
+                        <strong>Every batch. Under control.</strong>
+                        <ShieldCheck size={18} />
+                      </div>
+                      {[
+                        ["Panadol", "500 mg", "1,240 units"],
+                        ["Augmentin", "625 mg", "276 units"],
+                        ["Glucophage", "500 mg", "640 units"],
+                      ].map((p) => (
+                        <div key={p[0]}>
+                          <span className="product-icon">
+                            <Pill size={16} />
+                          </span>
+                          <span>
+                            <strong>{p[0]}</strong>
+                            <small>{p[1]}</small>
+                          </span>
+                          <span>{p[2]}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="primary full" onClick={onDemo}>
+                      Take a look inside <ArrowRight size={16} />
+                    </button>
                   </div>
-                  <button className="primary full" onClick={onDemo}>
-                    Take a look inside <ArrowRight size={16} />
-                  </button>
+                  <div className="floating-badge">
+                    <ShieldCheck size={23} />
+                    <span>
+                      <strong>Expiry-aware. Always.</strong>
+                      <small>Restricted stock stays off the bill.</small>
+                    </span>
+                  </div>
                 </div>
-                <div className="floating-badge">
-                  <ShieldCheck size={23} />
-                  <span>
-                    <strong>Expiry-aware. Always.</strong>
-                    <small>Restricted stock stays off the bill.</small>
-                  </span>
-                </div>
-              </div>
+              )}
             </section>
             <section className="public-strip">
               <span>ONE CONNECTED WORKSPACE</span>

@@ -74,3 +74,39 @@ Added `HomeMedicineGallery` to the public Home page with three classic clean, un
 A reserved desktop rail and a dedicated mobile bottom panel keep public content and trial/demo buttons separate from the gallery. The Home page's narrow-screen scroller works with quick-action back-to-top navigation. Image failures use a readable fallback. Reduced-motion, RTL and print handling are included. Desktop/mobile screenshots and browser checks verify the image assets load, unauthenticated visitors make no private inventory requests, and existing forms and application navigation remain functional.
 
 Home gallery validation: the TypeScript/production build, all 14 business-rule/image/migration tests and all 18 Chromium browser workflows passed. The six new public-gallery workflows cover actual image loading, no private catalog requests, previews and focus return, carousel controls, persisted visibility, autoplay pause behavior, broken-image fallback, mobile swipe and trial-form access, RTL, reduced motion and print exclusion. Additional viewport checks at 360, 390, 1024, 1280 and 1440 px found no horizontal overflow. These runs used an isolated synthetic database and Linux Chromium; actual Windows execution and physical devices/printers were not tested.
+
+## Selected Pinterest background and floating photos — pending assets
+
+The user's latest selection supersedes their previous links:
+`https://pin.it/6mKRanGBn` is the Home background;
+`https://pin.it/7uHbJG7G6`, `https://pin.it/5jsHYVtK2` and
+`https://pin.it/6BJsHFZqF` are the three floating images, in that order.
+The cloud proxy rejected the first Pinterest connection with HTTP 403. A draft
+adds `pin.it`, `pinterest.com`, `*.pinterest.com` and `i.pinimg.com`; it still
+needs to be applied through environment settings before downloading.
+
+`HomeSelectedPhotography` and its styles prepare the background overlay and three
+independently floating, uncropped photo frames, enlarged previews, keyboard
+focus return, reduced motion, RTL and print exclusion. Once all four exact
+assets are downloaded into `src/assets/home-selected`, the Home hero switches
+to these images and the public gallery uses the three selected images with
+accurate labels. Until then the current Home gallery remains available. No
+Pinterest image bytes have yet been downloaded or verified; the selected-image
+visual change is not complete. The user has authorized pushing the prepared
+implementation separately from those missing assets.
+
+Preparation checks: TypeScript/production build and the existing six public
+gallery browser tests passed. A separate browser smoke check temporarily used
+copies of the existing generated illustrations to exercise the new two-card
+layout, background, preview/focus return, animation and reduced motion, RTL,
+print exclusion, broken-image fallback and widths 360/390/1024/1280/1440 px.
+Those fixture copies were removed and the build restored to the existing Home
+page. This verifies layout code only; it does not verify the requested Pinterest
+assets, which remain blocked pending the network configuration change.
+
+After the request changed to three floating images, the same fixture-only
+browser smoke checks passed with three cards and a three-image gallery. All
+four temporary fixture copies were removed. The latest four source links and
+their intended positions are recorded in `src/assets/home-selected/README.md`.
+The exact selected images remain uninstalled. This delivery includes the
+prepared layout and source mapping; it does not include the Pinterest assets.
